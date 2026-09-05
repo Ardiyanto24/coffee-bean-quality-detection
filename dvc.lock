@@ -1,0 +1,19 @@
+schema: '2.0'
+stages:
+  generate_manifest:
+    cmd: python scripts/generate_manifest.py
+    deps:
+    - path: dataset
+      hash: md5
+      md5: 497b050013818e425f022c578ae674b2.dir
+      size: 12917178
+      nfiles: 1411
+    - path: scripts/generate_manifest.py
+      hash: md5
+      md5: 62e0cf05ba714a9f721cfef935382830
+      size: 1513
+    outs:
+    - path: metadata/manifest.csv
+      hash: md5
+      md5: fbefbafd14c46d8f0efa5e3d44721b9c
+      size: 49654

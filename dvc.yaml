@@ -1,0 +1,8 @@
+stages:
+  generate_manifest:
+    cmd: python scripts/generate_manifest.py
+    deps:
+      - scripts/generate_manifest.py
+      - dataset
+    outs:
+      - metadata/manifest.csv
