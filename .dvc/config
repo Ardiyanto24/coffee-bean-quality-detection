@@ -1,0 +1,6 @@
+[core]
+    remote = r2remote
+['remote "r2remote"']
+    url = s3://coffee-bean-quality-detection/dvcstore
+    endpointurl = https://1e67cc4290dfdca4719a4c8d9228cb31.r2.cloudflarestorage.com
+    region = auto
