@@ -17,3 +17,29 @@ stages:
       hash: md5
       md5: fbefbafd14c46d8f0efa5e3d44721b9c
       size: 49654
+  preprocess_dataset:
+    cmd: python scripts/preprocess_dataset.py
+    deps:
+    - path: dataset
+      hash: md5
+      md5: 497b050013818e425f022c578ae674b2.dir
+      size: 12917178
+      nfiles: 1411
+    - path: metadata/manifest.csv
+      hash: md5
+      md5: fbefbafd14c46d8f0efa5e3d44721b9c
+      size: 49654
+    - path: scripts/preprocess_dataset.py
+      hash: md5
+      md5: 6fa76b1cc45ac7852fc57f8ff8391619
+      size: 10758
+    outs:
+    - path: dataset_preprocessed
+      hash: md5
+      md5: d05b25ccb2088b5bf2967b23ba0ad18b.dir
+      size: 14924147
+      nfiles: 1360
+    - path: metadata/manifest_preprocessed.csv
+      hash: md5
+      md5: e3ae307a26e96ce2096d95c516ca823a
+      size: 88659
