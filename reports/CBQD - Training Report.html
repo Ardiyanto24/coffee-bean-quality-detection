@@ -1,0 +1,470 @@
+<title>Coffee Bean Training Report</title>
+<style>
+  :root{
+    color-scheme: light;
+    --bg: #f8f7f3;
+    --surface: #ffffff;
+    --surface-2: #f1efe8;
+    --ink: #1a1a15;
+    --ink-2: #5c5a4d;
+    --ink-mute: #8b8879;
+    --border: rgba(26,26,21,0.11);
+    --border-strong: rgba(26,26,21,0.18);
+    --accent: #4f6132;
+    --accent-ink: #ffffff;
+    --accent-soft: #e7ebdc;
+    --mono-bg: #efede3;
+
+    --c-defect: #2a78d6;
+    --c-longberry: #eb6834;
+    --c-peaberry: #1baf7a;
+    --c-premium: #eda100;
+
+    --good: #0ca30c;
+    --warning: #b9790a;
+    --critical: #b23a2f;
+    --warning-bg: #fbf1de;
+    --critical-bg: #fbeae7;
+    --good-bg: #e9f6e9;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --bg: #121210; --surface: #1b1b17; --surface-2: #232319;
+      --ink: #f2f1ea; --ink-2: #c3c2b3; --ink-mute: #8f8d7c;
+      --border: rgba(242,241,234,0.13); --border-strong: rgba(242,241,234,0.22);
+      --accent: #a3c479; --accent-ink: #14170d; --accent-soft: #26301a; --mono-bg: #201f18;
+      --c-defect: #6fa8ea; --c-longberry: #f0925f; --c-peaberry: #4fce9f; --c-premium: #f0b93f;
+      --good: #4fce6c; --warning: #e8b13d; --critical: #e8776a;
+      --warning-bg: #2c2412; --critical-bg: #2d1a16; --good-bg: #16261a;
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --bg: #121210; --surface: #1b1b17; --surface-2: #232319;
+    --ink: #f2f1ea; --ink-2: #c3c2b3; --ink-mute: #8f8d7c;
+    --border: rgba(242,241,234,0.13); --border-strong: rgba(242,241,234,0.22);
+    --accent: #a3c479; --accent-ink: #14170d; --accent-soft: #26301a; --mono-bg: #201f18;
+    --c-defect: #6fa8ea; --c-longberry: #f0925f; --c-peaberry: #4fce9f; --c-premium: #f0b93f;
+    --good: #4fce6c; --warning: #e8b13d; --critical: #e8776a;
+    --warning-bg: #2c2412; --critical-bg: #2d1a16; --good-bg: #16261a;
+  }
+
+  *{box-sizing:border-box;}
+  body{background:var(--bg);}
+  .doc{ max-width: 920px; margin: 0 auto; padding: 0 24px 96px;
+    font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--ink); }
+  h1,h2,h3{ font-family: "IBM Plex Serif", Georgia, serif; text-wrap: balance; font-weight: 600; margin: 0; }
+  .mono, .tabular, code{ font-family: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace; }
+  .tabular{ font-variant-numeric: tabular-nums; }
+  a{ color: var(--accent); }
+  p{ line-height: 1.65; color: var(--ink-2); max-width: 68ch; }
+
+  .masthead{ padding: 56px 0 28px; border-bottom: 1px solid var(--border); }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size: 12.5px; letter-spacing: 0.09em; text-transform: uppercase;
+    color: var(--accent); display:flex; align-items:center; gap:8px; }
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);}
+  h1.title{ font-size: clamp(30px, 4.4vw, 42px); line-height: 1.12; margin-top: 10px; max-width: 20ch; }
+  .subtitle{ margin-top: 10px; font-size: 15.5px; }
+  .meta-row{ display:flex; flex-wrap:wrap; gap: 10px 28px; margin-top: 22px; }
+  .meta-item{ display:flex; flex-direction:column; gap:2px; }
+  .meta-item .k{ font-size:11px; text-transform:uppercase; letter-spacing:.07em; color:var(--ink-mute); }
+  .meta-item .v{ font-size:13.5px; color:var(--ink); }
+  .pill{ display:inline-flex; align-items:center; gap:6px; padding: 3px 10px 3px 8px; border-radius: 999px;
+    background: var(--good-bg); color: var(--good); font-size: 12.5px; font-weight: 600;
+    border: 1px solid currentColor; width: fit-content; }
+  .pill svg{ width:11px; height:11px; }
+
+  nav.toc{ background: var(--bg); padding: 14px 0; border-bottom: 1px solid var(--border);
+    display:flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; position: sticky; top: 0; z-index: 5; }
+  nav.toc a{ font-size: 12px; text-decoration: none; color: var(--ink-2); padding: 6px 10px;
+    border-radius: 7px; border: 1px solid transparent; white-space: nowrap; }
+  nav.toc a:hover{ border-color: var(--border-strong); color: var(--ink); }
+
+  .tiles{ display:grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border);
+    border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin: 28px 0 8px; }
+  .tile{ background: var(--surface); padding: 18px 18px 16px; }
+  .tile .num{ font-family:"IBM Plex Serif", serif; font-weight:600; font-size: 27px; line-height:1; }
+  .tile .lbl{ margin-top:8px; font-size:12px; color:var(--ink-mute); line-height:1.4; }
+  .tile.flag .num{ color: var(--warning); }
+  .tile.good .num{ color: var(--good); }
+
+  section{ padding: 48px 0; border-bottom: 1px solid var(--border); scroll-margin-top: 52px; }
+  section:last-of-type{ border-bottom: none; }
+  .sec-head{ display:flex; align-items:baseline; gap:14px; margin-bottom: 22px; }
+  .sec-num{ font-family:"IBM Plex Mono", monospace; color: var(--ink-mute); font-size:13px; }
+  h2.sec-title{ font-size: 23px; }
+
+  .sec-block{ margin-top: 26px; }
+  .sec-block:first-of-type{ margin-top: 0; }
+  .sec-label{ font-family:"IBM Plex Mono",monospace; font-size:11px; text-transform:uppercase; letter-spacing:.08em;
+    color: var(--accent); display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+  .sec-label::after{ content:""; flex:1; height:1px; background: var(--border); }
+  .sec-block p{ font-size: 14px; }
+  .sec-block p + p{ margin-top: 10px; }
+
+  .steps{ list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:10px; }
+  .steps li{ display:flex; gap:12px; font-size:13.5px; color:var(--ink-2); line-height:1.55; }
+  .steps .si{ flex:none; width:20px; height:20px; border-radius:50%; background:var(--accent-soft); color:var(--accent);
+    display:flex; align-items:center; justify-content:center; font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:700; margin-top:1px; }
+  .steps b{ color: var(--ink); }
+
+  table{ border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  .table-wrap{ overflow-x:auto; margin-top:16px; border:1px solid var(--border); border-radius:10px; }
+  th, td{ text-align:left; padding: 9px 13px; border-bottom:1px solid var(--border); white-space:nowrap; }
+  thead th{ font-size: 11px; text-transform:uppercase; letter-spacing:.05em; color: var(--ink-mute);
+    background:var(--surface-2); font-weight:600; }
+  tbody tr:last-child td{ border-bottom:none; }
+  tbody tr:hover{ background: var(--surface-2); }
+  td.num, th.num{ text-align:right; font-variant-numeric: tabular-nums; }
+  .swatch{ display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:7px; }
+  tr.win td{ background: var(--good-bg); }
+  tr.win td:first-child{ box-shadow: inset 3px 0 0 var(--good); }
+
+  .callout{ display:flex; gap:12px; border:1px solid var(--border-strong); border-left: 3px solid var(--warning);
+    background: var(--warning-bg); border-radius: 10px; padding: 14px 16px; margin-top: 16px; }
+  .callout.critical{ border-left-color: var(--critical); background: var(--critical-bg); }
+  .callout.good{ border-left-color: var(--good); background: var(--good-bg); }
+  .callout .ic{ flex:none; margin-top:1px; }
+  .callout .ic svg{ width:17px; height:17px; }
+  .callout.warning .ic{ color: var(--warning); }
+  .callout.critical .ic{ color: var(--critical); }
+  .callout.good .ic{ color: var(--good); }
+  .callout .body b{ color: var(--ink); }
+  .callout .body{ font-size: 13.5px; color: var(--ink-2); line-height:1.55; }
+
+  .note{ font-size:12.5px; color:var(--ink-mute); margin-top:10px; }
+
+  .eta-row{ display:flex; align-items:center; gap:10px; font-size:13px; padding:6px 0; }
+  .eta-track{ flex:1; height:16px; background:var(--surface-2); border-radius:4px; overflow:hidden; }
+  .eta-fill{ height:100%; background:var(--accent); border-radius:4px; }
+  .eta-fill.win{ background: var(--good); }
+  .eta-label{ width:168px; flex:none; color:var(--ink-2); display:flex; align-items:center; gap:6px; }
+  .eta-val{ width:64px; flex:none; text-align:right; color: var(--ink); font-variant-numeric:tabular-nums; font-size:13px; }
+  .eta-badge{ font-family:"IBM Plex Mono",monospace; font-size:9.5px; text-transform:uppercase; letter-spacing:.04em;
+    color:var(--good); background:var(--good-bg); border:1px solid currentColor; border-radius:5px; padding:1px 5px; margin-left:6px; }
+
+  .flow{ display:flex; align-items:center; gap:10px; margin-top:16px; flex-wrap:wrap; }
+  .flow-box{ border:1px solid var(--border-strong); border-radius:10px; padding:12px 16px; background: var(--surface); min-width: 108px; }
+  .flow-box .n{ font-family:"IBM Plex Serif",serif; font-size:20px; font-weight:600; }
+  .flow-box .l{ font-size:11.5px; color:var(--ink-mute); margin-top:2px; }
+  .flow-arrow{ color: var(--ink-mute); font-size:16px; }
+  .flow-box.out{ border-color: var(--critical); } .flow-box.out .n{ color: var(--critical); }
+  .flow-box.in{ border-color: var(--good); } .flow-box.in .n{ color: var(--good); }
+  .flow-box.mute{ opacity:.55; }
+
+  .legend{ display:flex; gap:16px; flex-wrap:wrap; margin-top:12px; font-size:12.5px; color:var(--ink-2); }
+  .legend span{ display:flex; align-items:center; }
+
+  .split-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:28px; margin-top:4px; }
+
+  footer{ padding: 36px 0 0; font-size:12px; color:var(--ink-mute); }
+  footer a{ color: var(--ink-mute); }
+
+  @media (max-width: 700px){
+    .tiles{ grid-template-columns: repeat(2,1fr); }
+    .split-grid{ grid-template-columns: 1fr; }
+    .eta-label{ width:112px; }
+    th,td{ white-space: normal; }
+  }
+</style>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<div class="doc">
+
+  <div class="masthead">
+    <div class="eyebrow"><span class="dot"></span>Laporan Training · Coffee Bean Quality Detection</div>
+    <h1 class="title">Hasil Training 10 Model — Flat 4-Class</h1>
+    <p class="subtitle">Full run 50 epoch, 10 kandidat dari <code>docs/modeling-strategy.md</code>, dievaluasi head-to-head pada satu held-out test set yang sama. Dijalankan penuh di Kaggle (GPU T4) terhadap <code>dataset_preprocessed/</code> di R2 lewat DVC.</p>
+    <div class="meta-row">
+      <div class="meta-item"><span class="k">Status run</span>
+        <span class="pill"><svg viewBox="0 0 20 20" fill="none"><path d="M5 10.5L8.5 14L15 6.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Selesai — 0 error, 10/10 model</span></div>
+      <div class="meta-item"><span class="k">Sumber</span>
+        <span class="v mono"><a href="https://www.kaggle.com/code/ardiyanto24/cbqd-training" target="_blank" rel="noopener">cbqd-training · v4 (full run)</a></span></div>
+      <div class="meta-item"><span class="k">Versi data (DVC dir hash)</span><span class="v mono">d05b25cc…8ad18b</span></div>
+      <div class="meta-item"><span class="k">GPU</span><span class="v mono">Tesla T4 (dipin via machine_shape)</span></div>
+    </div>
+  </div>
+
+  <nav class="toc">
+    <a href="#s1">1 Setup</a><a href="#s2">2 Baseline</a><a href="#s3">3 Backbone CNN/ViT</a>
+    <a href="#s4">4 Hierarchical/Multi-task</a><a href="#s5">5 Noise-Robust</a>
+    <a href="#s6">6 Ensemble</a><a href="#s7">7 Ringkasan</a>
+  </nav>
+
+  <div class="tiles">
+    <div class="tile good"><div class="num tabular">10 / 10</div><div class="lbl">Model melewati gate baseline (macro-F1 &gt; 0.73)</div></div>
+    <div class="tile good"><div class="num tabular">0.961</div><div class="lbl">Macro-F1 tertinggi — <code>09_noise_robust</code></div></div>
+    <div class="tile"><div class="num tabular">231</div><div class="lbl">Gambar held-out test — tak pernah dipakai tuning</div></div>
+    <div class="tile flag"><div class="num tabular">0.891</div><div class="lbl">Ensemble — lebih rendah dari komponen CNN-nya sendiri (0.926)</div></div>
+  </div>
+
+  <!-- ============ SECTION 1 ============ -->
+  <section id="s1">
+    <div class="sec-head"><span class="sec-num">1</span><h2 class="sec-title">Setup Eksperimen — Data, Augmentasi &amp; Anggaran Training</h2></div>
+
+    <div class="sec-block"><div class="sec-label">Tujuan</div>
+      <p>Menjamin ke-10 model dibandingkan secara adil di kondisi yang identik — protokol split, augmentasi, dan anggaran epoch yang sama — sebelum satu angka pun dipercaya sebagai perbandingan kualitas arsitektur. Rencana parameter ditinjau dan direvisi bersama sebelum run apa pun dijalankan (rentang augmentasi, epoch maksimum, wajib dry-run dulu).</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Cara Kerja</div>
+      <ul class="steps">
+        <li><span class="si">1</span><span><b>Split data:</b> <code>dataset_preprocessed/train/</code> (929 gambar, cluster-aware 5-fold dari <code>preprocess_dataset.py</code>) dipecah jadi <code>fit</code> (fold 1–3) dan <code>val</code> (fold 0) untuk tuning; <code>dataset_preprocessed/test/</code> (fold 4, 231 gambar) disisihkan sepenuhnya, dievaluasi satu kali di akhir per model.</span></li>
+        <li><span class="si">2</span><span><b>Augmentasi (train only), semua sebagai rentang</b> — disampel ulang acak setiap gambar dipakai, bukan transformasi tetap: flip H/V 50%, rotasi ±180°, translasi ±10%, brightness/contrast ±10%, saturation ±5%, hue ±0,02. Validation/test hanya resize + normalize.</span></li>
+        <li><span class="si">3</span><span><b>Fine-tuning 2 fase:</b> fase 1 — backbone dibekukan, hanya head dilatih (LR 1e-3); fase 2 — seluruh model dibuka (LR 3e-4, ViT/DeiT 5e-5) dengan <code>ReduceLROnPlateau</code>.</span></li>
+        <li><span class="si">4</span><span><b>Dry-run wajib sebelum full run:</b> ke-10 model dijalankan dulu dengan anggaran epoch kecil (1+4) semata untuk memvalidasi kode berjalan bersih ujung-ke-ujung — sempat gagal 2× (target <code>dvc pull</code> yang salah, lalu GPU P100 yang tidak kompatibel dengan PyTorch bawaan Kaggle) sebelum lolos bersih dan lanjut ke full run 50 epoch di GPU T4.</span></li>
+      </ul>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Temuan</div>
+      <div class="flow">
+        <div class="flow-box"><div class="n tabular">929</div><div class="l">train pool (fold 0–3)</div></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box"><div class="n tabular">697 / 232</div><div class="l">fit (fold 1–3) / val (fold 0)</div></div>
+        <div class="flow-arrow">＋</div>
+        <div class="flow-box in"><div class="n tabular">231</div><div class="l">held-out test (fold 4)</div></div>
+        <div class="flow-arrow">＋</div>
+        <div class="flow-box mute"><div class="n tabular">200</div><div class="l">real_world (unlabeled, tak dipakai)</div></div>
+      </div>
+      <div class="table-wrap" style="margin-top:20px;">
+        <table>
+          <thead><tr><th>Model</th><th class="num">Early-stop di epoch</th><th class="num">Anggaran maks</th><th class="num">Durasi</th></tr></thead>
+          <tbody>
+            <tr><td>02_mobilenet_v3_large</td><td class="num tabular">19</td><td class="num tabular">45</td><td class="num tabular">1,5 menit</td></tr>
+            <tr><td>03_efficientnet_b0</td><td class="num tabular">16</td><td class="num tabular">45</td><td class="num tabular">1,6 menit</td></tr>
+            <tr><td>04_resnet18</td><td class="num tabular">20</td><td class="num tabular">45</td><td class="num tabular">1,6 menit</td></tr>
+            <tr><td>05_convnext_tiny</td><td class="num tabular">30</td><td class="num tabular">45</td><td class="num tabular">8,0 menit</td></tr>
+            <tr><td>06_deit_tiny</td><td class="num tabular">32</td><td class="num tabular">45</td><td class="num tabular">2,4 menit</td></tr>
+            <tr><td>07_hierarchical (tipe / rusak)</td><td class="num tabular">30 / 20</td><td class="num tabular">45</td><td class="num tabular">2,1 + 1,9 menit</td></tr>
+            <tr><td>08_multitask</td><td class="num tabular">32</td><td class="num tabular">45</td><td class="num tabular">—</td></tr>
+            <tr><td>09_noise_robust</td><td class="num tabular">38</td><td class="num tabular">45</td><td class="num tabular">3,3 menit</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Model #1 (gradient boosting) &amp; #10 (ensemble) tidak melalui loop epoch — instan di CPU. Durasi #08 tidak tercatat terpisah (fungsi training bespoke tanpa print waktu).</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Interpretasi</div>
+      <p>Semua model berhenti lewat <i>early stopping</i> jauh sebelum menyentuh batas 45 epoch fase-2 (rentang epoch 16–38) — anggaran 50 epoch dengan <code>patience=10</code> terbukti longgar, bukan penghambat. Tidak ada model yang terlihat <i>underfit</i> karena kehabisan jatah epoch. ConvNeXt-Tiny paling lama (8 menit, berhenti di epoch 30) karena parameter per-batch-nya paling berat di antara kandidat CNN — sesuatu yang perlu dipertimbangkan kalau efisiensi inferensi/training jadi kriteria, bukan cuma akurasi puncak.</p>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 2 ============ -->
+  <section id="s2">
+    <div class="sec-head"><span class="sec-num">2</span><h2 class="sec-title">Baseline — Gradient Boosting di Atas Fitur Tangan</h2></div>
+
+    <div class="sec-block"><div class="sec-label">Tujuan</div>
+      <p>Model #1 dari roadmap adalah <b style="color:var(--ink)">gate wajib</b>, bukan sekadar kandidat pertama: <code>docs/modeling-strategy.md</code> §3 mensyaratkan model apa pun harus mengalahkan baseline RandomForest EDA v2 (73% akurasi CV) sebelum dipercaya — kalau tidak, kemungkinan ada yang salah di pipeline, bukan soal model kurang canggih.</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Cara Kerja</div>
+      <p>11 fitur hand-crafted (bentuk, warna, tekstur — sama seperti EDA v2 Section 11) dihitung ulang dari gambar <b style="color:var(--ink)">mentah</b> (<code>orig_path</code>), sengaja bukan dari gambar hasil crop-to-bbox — cropping membuat fitur seperti <code>area_frac</code>/<code>center_offset</code> kehilangan makna. Dilatih dengan <code>LGBMClassifier</code> (300 estimator, depth 5, LR 0,05).</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Temuan</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Kelas</th><th class="num">Precision</th><th class="num">Recall</th><th class="num">F1</th><th class="num">Support</th></tr></thead>
+          <tbody>
+            <tr><td><span class="swatch" style="background:var(--c-defect)"></span>defect</td><td class="num tabular">0.72</td><td class="num tabular">0.73</td><td class="num tabular">0.72</td><td class="num tabular">59</td></tr>
+            <tr><td><span class="swatch" style="background:var(--c-longberry)"></span>longberry</td><td class="num tabular">0.76</td><td class="num tabular">0.82</td><td class="num tabular">0.79</td><td class="num tabular">57</td></tr>
+            <tr><td><span class="swatch" style="background:var(--c-peaberry)"></span>peaberry</td><td class="num tabular">0.76</td><td class="num tabular">0.72</td><td class="num tabular">0.74</td><td class="num tabular">58</td></tr>
+            <tr><td><span class="swatch" style="background:var(--c-premium)"></span>premium</td><td class="num tabular">0.74</td><td class="num tabular">0.70</td><td class="num tabular">0.72</td><td class="num tabular">57</td></tr>
+            <tr style="font-weight:600;"><td>macro avg</td><td class="num tabular">0.74</td><td class="num tabular">0.74</td><td class="num tabular">0.744</td><td class="num tabular">231</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Interpretasi</div>
+      <p>Macro-F1 0,744 — sedikit di atas RandomForest EDA v2 (73% akurasi), sesuai prediksi <code>modeling-strategy.md</code> §4 no.1 bahwa gradient boosting "hampir selalu mengungguli RF dengan effort tuning yang sama". Gate resmi terlewati: semua 9 model berikutnya sah dibandingkan terhadap angka <b style="color:var(--ink)">0,744</b> ini, bukan angka RF yang lama.</p>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 3 ============ -->
+  <section id="s3">
+    <div class="sec-head"><span class="sec-num">3</span><h2 class="sec-title">Backbone CNN &amp; ViT Transfer Learning (Model 2–6)</h2></div>
+
+    <div class="sec-block"><div class="sec-label">Tujuan</div>
+      <p>EDA menyimpulkan gambar ini "secara komposisi sederhana" (1 objek, background polos) — menguji apakah kesimpulan itu benar-benar berarti arsitektur ringan (mobile-oriented) sudah <i>cukup</i>, atau arsitektur modern yang lebih berat (ConvNeXt) maupun berbasis attention (ViT) masih membawa keunggulan berarti.</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Cara Kerja</div>
+      <p>Lima backbone pretrained ImageNet-1K (<code>torchvision</code> untuk empat yang pertama, <code>timm</code> untuk DeiT — dipilih daripada ViT-Base bawaan torchvision yang 86M parameter, terlalu besar untuk ~700 gambar), semua melalui skema fine-tuning 2-fase yang identik dari Section 1: MobileNetV3-Large, EfficientNet-B0, ResNet-18, ConvNeXt-Tiny, DeiT-Tiny (<code>deit_tiny_patch16_224</code>).</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Temuan</div>
+      <div class="eta-row"><span class="eta-label"><span class="swatch" style="background:var(--accent)"></span>05 ConvNeXt-Tiny</span><div class="eta-track"><div class="eta-fill" style="width:100%"></div></div><span class="eta-val tabular">0.948</span></div>
+      <div class="eta-row"><span class="eta-label"><span class="swatch" style="background:var(--accent)"></span>06 DeiT-Tiny</span><div class="eta-track"><div class="eta-fill" style="width:98.6%"></div></div><span class="eta-val tabular">0.935</span></div>
+      <div class="eta-row"><span class="eta-label"><span class="swatch" style="background:var(--accent)"></span>04 ResNet-18</span><div class="eta-track"><div class="eta-fill" style="width:97.7%"></div></div><span class="eta-val tabular">0.926</span></div>
+      <div class="eta-row"><span class="eta-label"><span class="swatch" style="background:var(--accent)"></span>02 MobileNetV3-L</span><div class="eta-track"><div class="eta-fill" style="width:96.8%"></div></div><span class="eta-val tabular">0.917</span></div>
+      <div class="eta-row"><span class="eta-label"><span class="swatch" style="background:var(--accent)"></span>03 EfficientNet-B0</span><div class="eta-track"><div class="eta-fill" style="width:96.4%"></div></div><span class="eta-val tabular">0.914</span></div>
+      <p class="note">Skala batang relatif terhadap ConvNeXt-Tiny (macro-F1 tertinggi di kelompok ini = 0,948). Rentang penuh kelompok: 0,914–0,948 — selisih ujung-ke-ujung cuma 3,4 poin persentase.</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Interpretasi</div>
+      <p>Kelima arsitektur berkerumun rapat — persis seperti dugaan EDA. ConvNeXt-Tiny unggul tipis, tapi makan waktu training <b style="color:var(--ink)">5× lebih lama</b> dari MobileNet untuk gain cuma ~3 poin (lihat Section 1). Untuk dataset sekecil ini, pilihan arsitektur bukan pengungkit utama — poin ini penting sebagai konteks sebelum membaca Section 5: perbaikan besar (+1,3 s.d. +4,7 poin dari ConvNeXt) ternyata datang dari <i>cara melatih</i>, bukan dari <i>ganti backbone</i>.</p>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 4 ============ -->
+  <section id="s4">
+    <div class="sec-head"><span class="sec-num">4</span><h2 class="sec-title">Struktur Berbasis Hipotesis EDA v3 — Hierarchical &amp; Multi-task (Model 7–8)</h2></div>
+
+    <div class="sec-block"><div class="sec-label">Tujuan</div>
+      <p>EDA v3 menemukan (3 metode independen sepakat) bahwa <code>defect</code> kemungkinan besar adalah campuran 3 jenis bean lain yang rusak — bukan kelas tunggal yang homogen. Kedua model ini menguji <b style="color:var(--ink)">langsung</b> apakah memecah problem 4-kelas datar menjadi 2 sub-task (jenis bean × status rusak) benar-benar menaikkan performa, khususnya recall <code>defect</code> yang paling lemah di baseline hand-crafted (Section 2: 0,73).</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Cara Kerja</div>
+      <ul class="steps">
+        <li><span class="si">7</span><span><b>Two-stage hierarchical:</b> dua EfficientNet-B0 terpisah — classifier jenis 3-kelas (<code>premium</code>/<code>peaberry</code>/<code>longberry</code>, HANYA sampel non-defect, fit=523/val=174) dan classifier biner rusak/tidak (seluruh data, fit=697/val=232). Prediksi keduanya digabung balik ke 4 label flat untuk evaluasi adil dengan model lain.</span></li>
+        <li><span class="si">8</span><span><b>Multi-task single-backbone:</b> satu EfficientNet-B0 + dua head (jenis &amp; rusak), loss gabungan dengan <i>loss</i> jenis di-mask untuk sampel <code>defect</code> (yang tidak punya label jenis yang valid).</span></li>
+      </ul>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Temuan</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Model</th><th class="num">Macro-F1 test</th><th class="num">Recall defect</th><th class="num">Val sub-task tipe</th><th class="num">Val sub-task rusak</th></tr></thead>
+          <tbody>
+            <tr><td>07_hierarchical</td><td class="num tabular">0.927</td><td class="num tabular">0.898</td><td class="num tabular">0.994</td><td class="num tabular">0.978</td></tr>
+            <tr><td>08_multitask</td><td class="num tabular">0.940</td><td class="num tabular">0.898</td><td class="num tabular">—</td><td class="num tabular">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Kolom sub-task hanya berlaku untuk #07 (dua model terpisah dengan val-F1 sendiri-sendiri); #08 melatih kedua head sekaligus lewat satu loss gabungan, tidak punya angka val per sub-task yang terpisah.</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Interpretasi</div>
+      <p>Sub-task individualnya sendiri <b style="color:var(--ink)">sangat mudah</b> (val-F1 0,994 untuk klasifikasi jenis, 0,978 untuk deteksi rusak) — tapi begitu digabung balik ke 4 label flat untuk evaluasi yang adil, hasilnya (0,927 dan 0,940) justru <b style="color:var(--ink)">kalah dari ConvNeXt-Tiny polos yang flat</b> (0,948, Section 3). Recall <code>defect</code> keduanya (0,898) juga tidak istimewa dibanding kelompok CNN biasa. Hipotesis struktural dari EDA v3 <b style="color:var(--ink)">tidak terbukti jadi pengungkit performa</b> di sini — errornya menumpuk saat kombinasi dua sub-model, meniadakan keunggulan tiap sub-task yang sebenarnya sudah sangat akurat sendiri-sendiri.</p>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 5 ============ -->
+  <section id="s5">
+    <div class="sec-head"><span class="sec-num">5</span><h2 class="sec-title">Kandidat Terbaik — Noise-Robust Training (Model 9)</h2></div>
+
+    <div class="sec-block"><div class="sec-label">Tujuan</div>
+      <p>EDA v2 Section 12 menemukan ~4,5% kandidat label bermasalah lewat proxy mistakenness — bukan bukti pasti, tapi sinyal bahwa training tidak boleh berasumsi label 100% bersih. Model ini menguji jalur perbaikan yang sama sekali berbeda dari Section 4: bukan mengubah <i>struktur</i> label, tapi menangani <i>ketidakpastian</i> label secara langsung saat training.</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Cara Kerja</div>
+      <p>Arsitektur identik dengan EfficientNet-B0 polos (Model 3), tapi mistakenness dihitung ulang khusus untuk pool <code>fit</code> saat ini (<code>RandomForestClassifier</code> + <code>cross_val_predict</code> out-of-fold, <code>StratifiedGroupKFold</code> berbasis <code>cluster_id</code> supaya bean fisik yang sama tak bocor lintas fold), lalu dilatih dengan <code>CrossEntropyLoss(label_smoothing=0.1)</code> dan bobot sampel diturunkan 0,5× untuk kandidat yang ditandai.</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Temuan</div>
+      <div class="callout good">
+        <div class="ic"><svg viewBox="0 0 20 20" fill="none"><path d="M5 10.5L8.5 14L15 6.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="body"><b>33 dari 697 gambar fit (4,7%)</b> ditandai sebagai kandidat mislabel dan diturunkan bobotnya — proporsi ini konsisten dengan temuan independen EDA v2 (4,5% dari populasi train yang lebih besar).</div>
+      </div>
+      <div class="table-wrap" style="margin-top:16px;">
+        <table>
+          <thead><tr><th>Kelas</th><th class="num">Precision</th><th class="num">Recall</th><th class="num">F1</th><th class="num">Support</th></tr></thead>
+          <tbody>
+            <tr><td><span class="swatch" style="background:var(--c-defect)"></span>defect</td><td class="num tabular">0.97</td><td class="num tabular">0.95</td><td class="num tabular">0.96</td><td class="num tabular">59</td></tr>
+            <tr><td><span class="swatch" style="background:var(--c-longberry)"></span>longberry</td><td class="num tabular">0.98</td><td class="num tabular">1.00</td><td class="num tabular">0.99</td><td class="num tabular">57</td></tr>
+            <tr><td><span class="swatch" style="background:var(--c-peaberry)"></span>peaberry</td><td class="num tabular">0.95</td><td class="num tabular">0.97</td><td class="num tabular">0.96</td><td class="num tabular">58</td></tr>
+            <tr><td><span class="swatch" style="background:var(--c-premium)"></span>premium</td><td class="num tabular">0.95</td><td class="num tabular">0.93</td><td class="num tabular">0.94</td><td class="num tabular">57</td></tr>
+            <tr class="win" style="font-weight:600;"><td>macro avg</td><td class="num tabular">0.96</td><td class="num tabular">0.96</td><td class="num tabular">0.961</td><td class="num tabular">231</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Val-F1 0,983 → test-F1 0,961 (selisih 0,022) — gap val↔test terkecil dari seluruh 10 kandidat, tanda generalisasi paling stabil, bukan cuma beruntung di satu split.</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Interpretasi</div>
+      <p>Kemenangan telak: macro-F1 0,961 mengalahkan <i>semua</i> kandidat lain, termasuk ConvNeXt-Tiny yang arsitekturnya lebih besar (Section 3) dan kedua model berstruktur hierarchical/multi-task (Section 4). Recall <code>defect</code> (0,949) — kelas paling sulit di seluruh laporan sejauh ini — melonjak jauh dari baseline (0,73) hanya lewat penanganan label, tanpa mengubah arsitektur maupun struktur label sama sekali. Ini bukti kuat bahwa <b style="color:var(--ink)">akar masalah <code>defect</code> yang sulit lebih banyak soal label noise daripada soal struktur kategori</b> — melengkapi, bahkan sebagian menggantikan, penjelasan "defect = campuran jenis lain" dari EDA v3.</p>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 6 ============ -->
+  <section id="s6">
+    <div class="sec-head"><span class="sec-num">6</span><h2 class="sec-title">Ensemble — Gagal Mengalahkan Komponennya Sendiri (Model 10)</h2></div>
+
+    <div class="sec-block"><div class="sec-label">Tujuan</div>
+      <p>Menguji late-fusion antara sinyal hand-crafted (interpretable, Model 1) dan CNN terbaik — pendekatan yang menurut <code>modeling-strategy.md</code> §4 no.10 "sering menambah robustness pada dataset kecil".</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Cara Kerja</div>
+      <p>Rata-rata probabilitas 50/50 antara <code>01_gradient_boosting</code> dan CNN dengan val-F1 tertinggi di antara kandidat #2–6 — dipilih otomatis: <code>04_resnet18</code> (val-F1 0,978).</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Temuan</div>
+      <div class="eta-row"><span class="eta-label"><span class="swatch" style="background:var(--accent)"></span>01 Gradient Boosting</span><div class="eta-track"><div class="eta-fill" style="width:80.4%"></div></div><span class="eta-val tabular">0.744</span></div>
+      <div class="eta-row"><span class="eta-label"><span class="swatch" style="background:var(--good)"></span>04 ResNet-18 (sendiri)</span><div class="eta-track"><div class="eta-fill win" style="width:100%"></div></div><span class="eta-val tabular">0.926</span></div>
+      <div class="eta-row"><span class="eta-label"><span class="swatch" style="background:var(--critical)"></span>10 Ensemble (GB+ResNet)</span><div class="eta-track"><div class="eta-fill" style="width:96.2%; background:var(--critical)"></div></div><span class="eta-val tabular">0.891</span></div>
+      <div class="callout critical" style="margin-top:16px;">
+        <div class="ic"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.6"/><path d="M10 6.5V10.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="10" cy="13.3" r="0.9" fill="currentColor"/></svg></div>
+        <div class="body">Menggabungkan ResNet-18 dengan Gradient Boosting justru <b>menurunkan</b> macro-F1 dari 0,926 (ResNet-18 sendirian) jadi 0,891 — turun 3,5 poin persentase, bukan naik.</div>
+      </div>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Interpretasi</div>
+      <p>Ini bukti langsung dari diskusi sebelumnya soal kenapa tidak asal meng-ensemble semua model: rata-rata statis 50/50 antara dua model yang kualitasnya jomplang jauh (0,744 vs 0,926) tidak menghasilkan sinyal yang saling melengkapi — kesalahan Gradient Boosting (berbasis fitur tangan yang lebih kasar) justru <i>mengencerkan</i> sinyal kuat dari ResNet-18, bukan menutupinya. Late-fusion baru masuk akal ketika kedua komponennya sepadan kualitasnya, atau bobotnya dioptimalkan (bukan 50/50 tetap) — bukan langkah pertama yang layak dicoba begitu saja.</p>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 7 ============ -->
+  <section id="s7">
+    <div class="sec-head"><span class="sec-num">7</span><h2 class="sec-title">Ringkasan &amp; Peringkat Akhir</h2></div>
+
+    <div class="sec-block"><div class="sec-label">Tujuan</div>
+      <p>Membandingkan seluruh 10 kandidat pada satu held-out test yang identik (231 gambar, tidak pernah disentuh untuk tuning apa pun), untuk menentukan mana yang paling layak dibawa ke tahap validasi berikutnya yang lebih ketat.</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Cara Kerja</div>
+      <p>Evaluasi final satu kali per model di test set yang sama, metrik utama macro-F1 (bukan akurasi — sesuai <code>modeling-strategy.md</code> §3, karena kelemahan tersebar tidak rata antar kelas). Dibaca sebagai dua sub-masalah terpisah: deteksi rusak (recall <code>defect</code>) vs identifikasi jenis (recall <code>premium</code>/<code>peaberry</code>/<code>longberry</code>).</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Temuan</div>
+      <div class="eta-row"><span class="eta-label"><span class="swatch" style="background:var(--good)"></span>09 Noise-Robust</span><div class="eta-track"><div class="eta-fill win" style="width:100%"></div></div><span class="eta-val tabular">0.961<span class="eta-badge">Terbaik</span></span></div>
+      <div class="eta-row"><span class="eta-label"><span class="swatch" style="background:var(--accent)"></span>05 ConvNeXt-Tiny</span><div class="eta-track"><div class="eta-fill" style="width:98.6%"></div></div><span class="eta-val tabular">0.948</span></div>
+      <div class="eta-row"><span class="eta-label"><span class="swatch" style="background:var(--accent)"></span>08 Multi-task</span><div class="eta-track"><div class="eta-fill" style="width:97.8%"></div></div><span class="eta-val tabular">0.940</span></div>
+      <div class="eta-row"><span class="eta-label"><span class="swatch" style="background:var(--accent)"></span>06 DeiT-Tiny</span><div class="eta-track"><div class="eta-fill" style="width:97.3%"></div></div><span class="eta-val tabular">0.935</span></div>
+      <div class="eta-row"><span class="eta-label"><span class="swatch" style="background:var(--accent)"></span>07 Hierarchical</span><div class="eta-track"><div class="eta-fill" style="width:96.5%"></div></div><span class="eta-val tabular">0.927</span></div>
+      <div class="eta-row"><span class="eta-label"><span class="swatch" style="background:var(--accent)"></span>04 ResNet-18</span><div class="eta-track"><div class="eta-fill" style="width:96.4%"></div></div><span class="eta-val tabular">0.926</span></div>
+      <div class="eta-row"><span class="eta-label"><span class="swatch" style="background:var(--accent)"></span>02 MobileNetV3-L</span><div class="eta-track"><div class="eta-fill" style="width:95.4%"></div></div><span class="eta-val tabular">0.917</span></div>
+      <div class="eta-row"><span class="eta-label"><span class="swatch" style="background:var(--accent)"></span>03 EfficientNet-B0</span><div class="eta-track"><div class="eta-fill" style="width:95.1%"></div></div><span class="eta-val tabular">0.914</span></div>
+      <div class="eta-row"><span class="eta-label"><span class="swatch" style="background:var(--critical)"></span>10 Ensemble</span><div class="eta-track"><div class="eta-fill" style="width:92.7%; background:var(--critical)"></div></div><span class="eta-val tabular">0.891</span></div>
+      <div class="eta-row"><span class="eta-label"><span class="swatch" style="background:var(--ink-mute)"></span>01 Gradient Boosting</span><div class="eta-track"><div class="eta-fill" style="width:77.4%; background:var(--ink-mute)"></div></div><span class="eta-val tabular">0.744</span></div>
+      <p class="note">Skala batang relatif terhadap 09_noise_robust (0,961). Gate wajib <code>modeling-strategy.md</code> §3: macro-F1 &gt; 0,744 (baseline aktual run ini) — dilewati oleh sembilan model lain di atasnya.</p>
+
+      <div class="table-wrap" style="margin-top:24px;">
+        <table>
+          <thead><tr><th>Model</th><th class="num">Val F1</th><th class="num">Test F1</th><th class="num">Gap</th>
+            <th class="num"><span class="swatch" style="background:var(--c-defect)"></span>Defect</th>
+            <th class="num"><span class="swatch" style="background:var(--c-longberry)"></span>Longberry</th>
+            <th class="num"><span class="swatch" style="background:var(--c-peaberry)"></span>Peaberry</th>
+            <th class="num"><span class="swatch" style="background:var(--c-premium)"></span>Premium</th></tr></thead>
+          <tbody>
+            <tr class="win"><td>09_noise_robust</td><td class="num tabular">0.983</td><td class="num tabular">0.961</td><td class="num tabular">0.022</td><td class="num tabular">0.949</td><td class="num tabular">1.000</td><td class="num tabular">0.966</td><td class="num tabular">0.930</td></tr>
+            <tr><td>05_convnext_tiny</td><td class="num tabular">0.961</td><td class="num tabular">0.948</td><td class="num tabular">0.013</td><td class="num tabular">0.915</td><td class="num tabular">0.947</td><td class="num tabular">0.983</td><td class="num tabular">0.947</td></tr>
+            <tr><td>08_multitask</td><td class="num tabular">0.983</td><td class="num tabular">0.940</td><td class="num tabular">0.043</td><td class="num tabular">0.898</td><td class="num tabular">0.965</td><td class="num tabular">0.966</td><td class="num tabular">0.930</td></tr>
+            <tr><td>06_deit_tiny</td><td class="num tabular">0.961</td><td class="num tabular">0.935</td><td class="num tabular">0.026</td><td class="num tabular">0.949</td><td class="num tabular">0.965</td><td class="num tabular">0.966</td><td class="num tabular">0.860</td></tr>
+            <tr><td>07_hierarchical</td><td class="num tabular">0.979</td><td class="num tabular">0.927</td><td class="num tabular">0.052</td><td class="num tabular">0.898</td><td class="num tabular">0.965</td><td class="num tabular">0.948</td><td class="num tabular">0.895</td></tr>
+            <tr><td>04_resnet18</td><td class="num tabular">0.978</td><td class="num tabular">0.926</td><td class="num tabular">0.052</td><td class="num tabular">0.898</td><td class="num tabular">0.982</td><td class="num tabular">0.948</td><td class="num tabular">0.877</td></tr>
+            <tr><td>02_mobilenet_v3_large</td><td class="num tabular">0.957</td><td class="num tabular">0.917</td><td class="num tabular">0.040</td><td class="num tabular">0.881</td><td class="num tabular">0.982</td><td class="num tabular">0.966</td><td class="num tabular">0.842</td></tr>
+            <tr><td>03_efficientnet_b0</td><td class="num tabular">0.970</td><td class="num tabular">0.914</td><td class="num tabular">0.056</td><td class="num tabular">0.881</td><td class="num tabular">0.895</td><td class="num tabular">0.931</td><td class="num tabular">0.947</td></tr>
+            <tr><td>10_ensemble</td><td class="num tabular">—</td><td class="num tabular">0.891</td><td class="num tabular">—</td><td class="num tabular">0.797</td><td class="num tabular">0.982</td><td class="num tabular">0.931</td><td class="num tabular">0.860</td></tr>
+            <tr><td>01_gradient_boosting</td><td class="num tabular">0.708</td><td class="num tabular">0.744</td><td class="num tabular">−0.036</td><td class="num tabular">0.729</td><td class="num tabular">0.825</td><td class="num tabular">0.724</td><td class="num tabular">0.702</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Gap = val macro-F1 − test macro-F1. Gap kecil = generalisasi stabil; gap besar (mis. EfficientNet-B0, ResNet-18, Hierarchical: ~0,05) = performa validasi agak terlalu optimis dibanding test sesungguhnya.</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Interpretasi</div>
+      <p><b style="color:var(--ink)">Pola per kelas</b> konsisten dengan EDA: <code>longberry</code> paling mudah dikenali di hampir semua model (bentuknya paling khas — elongasi tinggi), sementara <code>premium</code> paling sering jadi titik lemah (0,84–0,86 di beberapa model) karena paling sering tertukar dengan bean lain yang serupa. <code>09_noise_robust</code> istimewa karena satu-satunya yang kuat di <i>kedua</i> sisi sekaligus: recall <code>defect</code> tinggi (0,949) DAN recall <code>longberry</code> sempurna (1,000), dengan gap val↔test terkecil dari semua kandidat — tanda paling meyakinkan bahwa angkanya bukan kebetulan dari satu split data.</p>
+      <div class="callout" style="margin-top:16px;">
+        <div class="ic"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.6"/><path d="M10 6.5V10.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="10" cy="13.3" r="0.9" fill="currentColor"/></svg></div>
+        <div class="body"><b>Langkah selanjutnya yang disepakati:</b> sebelum memvalidasi <code>09_noise_robust</code> (dan 2 runner-up terdekatnya) dengan 4-fold CV penuh, lakukan pemeriksaan XAI (mis. Grad-CAM) dulu — 4-fold CV cuma menguji stabilitas skor terhadap pembagian data, bukan apakah model "berpikir" benar (fokus ke bean, bukan artefak framing/crop). Kalau XAI menemukan shortcut, rencana CV perlu direvisi juga; jadi urutan yang lebih efisien adalah XAI dulu, baru CV.</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Dibangkitkan dari eksekusi nyata <a href="https://www.kaggle.com/code/ardiyanto24/cbqd-training" target="_blank" rel="noopener">cbqd-training</a> (versi 4, full run 50 epoch, selesai tanpa error) terhadap <code class="mono">dataset_preprocessed/</code> R2 hash <span class="mono">d05b25cc…8ad18b</span>. Seluruh angka macro-F1, precision/recall/F1 per kelas, epoch early-stop, dan durasi training diambil langsung dari log run Kaggle di atas dan <code>metadata/model_comparison.csv</code> — bukan estimasi atau simulasi lokal.
+  </footer>
+
+</div>
