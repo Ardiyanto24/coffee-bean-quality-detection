@@ -6,3 +6,12 @@ stages:
       - dataset
     outs:
       - metadata/manifest.csv
+  preprocess_dataset:
+    cmd: python scripts/preprocess_dataset.py
+    deps:
+      - scripts/preprocess_dataset.py
+      - dataset
+      - metadata/manifest.csv
+    outs:
+      - dataset_preprocessed
+      - metadata/manifest_preprocessed.csv
