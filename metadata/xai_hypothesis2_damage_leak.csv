@@ -1,0 +1,11 @@
+model,damage_leak_score,n_misclassified_as_defect,n_eval,damage_leak_vs_misclass_r,damage_leak_vs_misclass_p
+02_mobilenet_v3_large,1.0,5,172,0.010582660783672931,0.8904126220854589
+03_efficientnet_b0,1.0,3,172,,
+04_resnet18,1.0,4,172,,
+05_convnext_tiny,1.0,4,172,-0.15710390893649426,0.03957353253089727
+09_noise_robust,1.0,3,172,,
+06_deit_tiny,0.0,4,172,-0.11476123791104424,0.13385757356751685
+07b_damage,1.0,2,172,,
+08_damage_head,1.0,3,172,,
+01_gradient_boosting,0.0,17,172,0.25364225636030846,0.000787062766718784
+10_ensemble,,4,172,,
