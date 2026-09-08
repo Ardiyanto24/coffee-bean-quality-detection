@@ -1,0 +1,4 @@
+model,tier,damage_leak_score,damage_leak_delta_vs_baseline,real_world_confidence,real_world_confidence_delta_vs_baseline,old_vs_new_agreement_rate,head_agreement_heatmap_corr
+08_multitask,full (Grad-CAM+TCAV+probe+H2+H3),1.0,0.0,0.8583635736367913,-0.03296427056247753,,0.6989942504290139
+05_convnext_tiny,spot-check (agreement+H2+H3),1.0,0.0,0.9183813333511353,-0.0200960636138916,0.961038961038961,
+09_noise_robust,spot-check (agreement+H2+H3),1.0,0.0,0.7762594819068909,0.021809875965118408,0.9393939393939394,

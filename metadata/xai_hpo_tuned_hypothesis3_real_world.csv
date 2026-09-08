@@ -1,0 +1,4 @@
+model,test_confidence_mean,real_world_confidence_mean,real_world_class_distribution,real_world_confidence_baseline,real_world_confidence_delta
+08_multitask_tuned,0.9579552958745238,0.8583635736367913,"{'defect': 0.225, 'longberry': 0.365, 'peaberry': 0.22, 'premium': 0.19}",0.8913278441992688,-0.03296427056247753
+05_convnext_tiny_tuned,0.9786838293075562,0.9183813333511353,"{'defect': 0.18, 'longberry': 0.285, 'peaberry': 0.315, 'premium': 0.22}",0.9384773969650269,-0.0200960636138916
+09_noise_robust_tuned,0.8843539953231812,0.7762594819068909,"{'defect': 0.205, 'longberry': 0.28, 'peaberry': 0.255, 'premium': 0.26}",0.7544496059417725,0.021809875965118408

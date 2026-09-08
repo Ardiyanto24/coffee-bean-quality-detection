@@ -1,0 +1,4 @@
+model,damage_leak_score,n_misclassified_as_defect,n_eval,damage_leak_vs_misclass_r,damage_leak_vs_misclass_p,damage_leak_score_baseline,damage_leak_score_delta
+08_damage_head_tuned,1.0,5,172,,,1.0,0.0
+05_convnext_tiny_tuned,1.0,5,172,-0.011988425407379492,0.8759653458533341,1.0,0.0
+09_noise_robust_tuned,1.0,1,172,,,1.0,0.0
