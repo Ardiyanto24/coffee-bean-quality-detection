@@ -1,0 +1,4 @@
+model,n_seeds,test_macro_f1_mean,test_macro_f1_std,test_macro_f1_min,test_macro_f1_max
+09_noise_robust,5,0.9540,0.0171,0.9304,0.9697
+08_multitask,5,0.9532,0.0198,0.9304,0.9826
+05_convnext_tiny,5,0.9448,0.0115,0.9267,0.9526

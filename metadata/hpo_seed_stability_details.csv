@@ -1,0 +1,16 @@
+model,seed,val_macro_f1,test_macro_f1
+05_convnext_tiny,42,0.9698,0.9267
+05_convnext_tiny,43,0.9784,0.9526
+05_convnext_tiny,44,0.9699,0.9525
+05_convnext_tiny,45,0.9700,0.9397
+05_convnext_tiny,46,0.9741,0.9525
+09_noise_robust,42,0.9828,0.9304
+09_noise_robust,43,0.9784,0.9568
+09_noise_robust,44,0.9786,0.9435
+09_noise_robust,45,0.9827,0.9697
+09_noise_robust,46,0.9742,0.9697
+08_multitask,42,0.9699,0.9436
+08_multitask,43,0.9742,0.9304
+08_multitask,44,0.9871,0.9826
+08_multitask,45,0.9828,0.9612
+08_multitask,46,0.9743,0.9481

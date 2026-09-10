@@ -1,0 +1,4 @@
+model,cv4fold_pre_hpo_mean,cv4fold_pre_hpo_std,hpo_report_1run,xai_verify_1run,seed_sweep_mean,seed_sweep_std,seed_sweep_n
+09_noise_robust,0.9470,0.0130,0.9610,0.9739,0.9540,0.0171,5
+08_multitask,0.9347,0.0147,0.9698,0.9352,0.9532,0.0198,5
+05_convnext_tiny,0.9404,0.0189,0.9483,0.9267,0.9448,0.0115,5
