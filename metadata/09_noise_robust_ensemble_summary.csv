@@ -1,0 +1,2 @@
+ensemble_test_macro_f1,ensemble_test_accuracy,ensemble_real_world_confidence,individual_mean_seed_sweep,individual_std_seed_sweep,individual_best_this_run,individual_worst_this_run,ensemble_vs_mean_delta,ensemble_vs_best_delta,n_seeds,ensemble_recall_defect,ensemble_recall_longberry,ensemble_recall_peaberry,ensemble_recall_premium
+0.9611,0.9610,0.7323,0.9540,0.0171,0.9697,0.9304,0.0071,-0.0086,5,0.9322,1.0000,0.9655,0.9474
