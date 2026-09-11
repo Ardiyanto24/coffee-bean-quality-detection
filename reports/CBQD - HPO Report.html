@@ -1,0 +1,418 @@
+<title>Coffee Bean HPO Report</title>
+<style>
+  :root{
+    color-scheme: light;
+    --bg: #f8f7f3;
+    --surface: #ffffff;
+    --surface-2: #f1efe8;
+    --ink: #1a1a15;
+    --ink-2: #5c5a4d;
+    --ink-mute: #8b8879;
+    --border: rgba(26,26,21,0.11);
+    --border-strong: rgba(26,26,21,0.18);
+    --accent: #4f6132;
+    --accent-ink: #ffffff;
+    --accent-soft: #e7ebdc;
+    --mono-bg: #efede3;
+
+    --c-defect: #2a78d6;
+    --c-longberry: #eb6834;
+    --c-peaberry: #1baf7a;
+    --c-premium: #eda100;
+
+    --good: #0ca30c;
+    --warning: #b9790a;
+    --critical: #b23a2f;
+    --warning-bg: #fbf1de;
+    --critical-bg: #fbeae7;
+    --good-bg: #e9f6e9;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --bg: #121210; --surface: #1b1b17; --surface-2: #232319;
+      --ink: #f2f1ea; --ink-2: #c3c2b3; --ink-mute: #8f8d7c;
+      --border: rgba(242,241,234,0.13); --border-strong: rgba(242,241,234,0.22);
+      --accent: #a3c479; --accent-ink: #14170d; --accent-soft: #26301a; --mono-bg: #201f18;
+      --c-defect: #6fa8ea; --c-longberry: #f0925f; --c-peaberry: #4fce9f; --c-premium: #f0b93f;
+      --good: #4fce6c; --warning: #e8b13d; --critical: #e8776a;
+      --warning-bg: #2c2412; --critical-bg: #2d1a16; --good-bg: #16261a;
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --bg: #121210; --surface: #1b1b17; --surface-2: #232319;
+    --ink: #f2f1ea; --ink-2: #c3c2b3; --ink-mute: #8f8d7c;
+    --border: rgba(242,241,234,0.13); --border-strong: rgba(242,241,234,0.22);
+    --accent: #a3c479; --accent-ink: #14170d; --accent-soft: #26301a; --mono-bg: #201f18;
+    --c-defect: #6fa8ea; --c-longberry: #f0925f; --c-peaberry: #4fce9f; --c-premium: #f0b93f;
+    --good: #4fce6c; --warning: #e8b13d; --critical: #e8776a;
+    --warning-bg: #2c2412; --critical-bg: #2d1a16; --good-bg: #16261a;
+  }
+
+  *{box-sizing:border-box;}
+  body{background:var(--bg);}
+  .doc{ max-width: 920px; margin: 0 auto; padding: 0 24px 96px;
+    font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--ink); }
+  h1,h2,h3{ font-family: "IBM Plex Serif", Georgia, serif; text-wrap: balance; font-weight: 600; margin: 0; }
+  .mono, .tabular, code{ font-family: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace; }
+  .tabular{ font-variant-numeric: tabular-nums; }
+  a{ color: var(--accent); }
+  p{ line-height: 1.65; color: var(--ink-2); max-width: 68ch; }
+
+  .masthead{ padding: 56px 0 28px; border-bottom: 1px solid var(--border); }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size: 12.5px; letter-spacing: 0.09em; text-transform: uppercase;
+    color: var(--accent); display:flex; align-items:center; gap:8px; }
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);}
+  h1.title{ font-size: clamp(30px, 4.4vw, 42px); line-height: 1.12; margin-top: 10px; max-width: 24ch; }
+  .subtitle{ margin-top: 10px; font-size: 15.5px; }
+  .meta-row{ display:flex; flex-wrap:wrap; gap: 10px 28px; margin-top: 22px; }
+  .meta-item{ display:flex; flex-direction:column; gap:2px; }
+  .meta-item .k{ font-size:11px; text-transform:uppercase; letter-spacing:.07em; color:var(--ink-mute); }
+  .meta-item .v{ font-size:13.5px; color:var(--ink); }
+  .pill{ display:inline-flex; align-items:center; gap:6px; padding: 3px 10px 3px 8px; border-radius: 999px;
+    background: var(--good-bg); color: var(--good); font-size: 12.5px; font-weight: 600;
+    border: 1px solid currentColor; width: fit-content; }
+  .pill svg{ width:11px; height:11px; }
+
+  nav.toc{ background: var(--bg); padding: 14px 0; border-bottom: 1px solid var(--border);
+    display:flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; position: sticky; top: 0; z-index: 5; }
+  nav.toc a{ font-size: 12px; text-decoration: none; color: var(--ink-2); padding: 6px 10px;
+    border-radius: 7px; border: 1px solid transparent; white-space: nowrap; }
+  nav.toc a:hover{ border-color: var(--border-strong); color: var(--ink); }
+
+  .tiles{ display:grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border);
+    border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin: 28px 0 8px; }
+  .tile{ background: var(--surface); padding: 18px 18px 16px; }
+  .tile .num{ font-family:"IBM Plex Serif", serif; font-weight:600; font-size: 27px; line-height:1; }
+  .tile .lbl{ margin-top:8px; font-size:12px; color:var(--ink-mute); line-height:1.4; }
+  .tile.flag .num{ color: var(--warning); }
+  .tile.good .num{ color: var(--good); }
+  .tile.critical .num{ color: var(--critical); }
+
+  section{ padding: 48px 0; border-bottom: 1px solid var(--border); scroll-margin-top: 52px; }
+  section:last-of-type{ border-bottom: none; }
+  .sec-head{ display:flex; align-items:baseline; gap:14px; margin-bottom: 22px; }
+  .sec-num{ font-family:"IBM Plex Mono", monospace; color: var(--ink-mute); font-size:13px; }
+  h2.sec-title{ font-size: 23px; }
+
+  .sec-block{ margin-top: 26px; }
+  .sec-block:first-of-type{ margin-top: 0; }
+  .sec-label{ font-family:"IBM Plex Mono",monospace; font-size:11px; text-transform:uppercase; letter-spacing:.08em;
+    color: var(--accent); display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+  .sec-label::after{ content:""; flex:1; height:1px; background: var(--border); }
+  .sec-block p{ font-size: 14px; }
+  .sec-block p + p{ margin-top: 10px; }
+
+  .steps{ list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:10px; }
+  .steps li{ display:flex; gap:12px; font-size:13.5px; color:var(--ink-2); line-height:1.55; }
+  .steps .si{ flex:none; width:20px; height:20px; border-radius:50%; background:var(--accent-soft); color:var(--accent);
+    display:flex; align-items:center; justify-content:center; font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:700; margin-top:1px; }
+  .steps b{ color: var(--ink); }
+
+  table{ border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  .table-wrap{ overflow-x:auto; margin-top:16px; border:1px solid var(--border); border-radius:10px; }
+  th, td{ text-align:left; padding: 9px 13px; border-bottom:1px solid var(--border); white-space:nowrap; }
+  thead th{ font-size: 11px; text-transform:uppercase; letter-spacing:.05em; color: var(--ink-mute);
+    background:var(--surface-2); font-weight:600; }
+  tbody tr:last-child td{ border-bottom:none; }
+  tbody tr:hover{ background: var(--surface-2); }
+  td.num, th.num{ text-align:right; font-variant-numeric: tabular-nums; }
+  .swatch{ display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:7px; }
+  tr.win td{ background: var(--good-bg); }
+  tr.win td:first-child{ box-shadow: inset 3px 0 0 var(--good); }
+
+  .callout{ display:flex; gap:12px; border:1px solid var(--border-strong); border-left: 3px solid var(--warning);
+    background: var(--warning-bg); border-radius: 10px; padding: 14px 16px; margin-top: 16px; }
+  .callout.critical{ border-left-color: var(--critical); background: var(--critical-bg); }
+  .callout.good{ border-left-color: var(--good); background: var(--good-bg); }
+  .callout .ic{ flex:none; margin-top:1px; }
+  .callout .ic svg{ width:17px; height:17px; }
+  .callout.warning .ic{ color: var(--warning); }
+  .callout.critical .ic{ color: var(--critical); }
+  .callout.good .ic{ color: var(--good); }
+  .callout .body b{ color: var(--ink); }
+  .callout .body{ font-size: 13.5px; color: var(--ink-2); line-height:1.55; }
+
+  .note{ font-size:12.5px; color:var(--ink-mute); margin-top:10px; }
+
+  .eta-row{ display:flex; align-items:center; gap:10px; font-size:13px; padding:6px 0; }
+  .eta-track{ flex:1; height:16px; background:var(--surface-2); border-radius:4px; overflow:hidden; }
+  .eta-fill{ height:100%; background:var(--accent); border-radius:4px; }
+  .eta-fill.win{ background: var(--good); }
+  .eta-label{ width:168px; flex:none; color:var(--ink-2); display:flex; align-items:center; gap:6px; }
+  .eta-val{ width:64px; flex:none; text-align:right; color: var(--ink); font-variant-numeric:tabular-nums; font-size:13px; }
+  .eta-badge{ font-family:"IBM Plex Mono",monospace; font-size:9.5px; text-transform:uppercase; letter-spacing:.04em;
+    color:var(--good); background:var(--good-bg); border:1px solid currentColor; border-radius:5px; padding:1px 5px; margin-left:6px; }
+
+  .flow{ display:flex; align-items:center; gap:10px; margin-top:16px; flex-wrap:wrap; }
+  .flow-box{ border:1px solid var(--border-strong); border-radius:10px; padding:12px 16px; background: var(--surface); min-width: 108px; }
+  .flow-box .n{ font-family:"IBM Plex Serif",serif; font-size:20px; font-weight:600; }
+  .flow-box .l{ font-size:11.5px; color:var(--ink-mute); margin-top:2px; }
+  .flow-arrow{ color: var(--ink-mute); font-size:16px; }
+  .flow-box.out{ border-color: var(--critical); } .flow-box.out .n{ color: var(--critical); }
+  .flow-box.in{ border-color: var(--good); } .flow-box.in .n{ color: var(--good); }
+  .flow-box.mute{ opacity:.55; }
+
+  .legend{ display:flex; gap:16px; flex-wrap:wrap; margin-top:12px; font-size:12.5px; color:var(--ink-2); }
+  .legend span{ display:flex; align-items:center; }
+
+  .split-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:28px; margin-top:4px; }
+
+  footer{ padding: 36px 0 0; font-size:12px; color:var(--ink-mute); }
+  footer a{ color: var(--ink-mute); }
+
+  @media (max-width: 700px){
+    .tiles{ grid-template-columns: repeat(2,1fr); }
+    .split-grid{ grid-template-columns: 1fr; }
+    .eta-label{ width:112px; }
+    th,td{ white-space: normal; }
+  }
+</style>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<div class="doc">
+
+  <div class="masthead">
+    <div class="eyebrow"><span class="dot"></span>Laporan Hyperparameter Optimization · Coffee Bean Quality Detection</div>
+    <h1 class="title">Optuna HPO — 3 Kandidat Teratas dari 4-Fold CV</h1>
+    <p class="subtitle">30 trial Optuna (TPE sampler + Median Pruner) per model untuk <code>09_noise_robust</code>, <code>05_convnext_tiny</code>, dan <code>08_multitask</code> — tiga kandidat teratas <code>CBQD - 4Fold CV.ipynb</code> — lalu retrain final di plafon epoch penuh (45) supaya adil dibanding baseline pre-HPO. Dijalankan penuh di Kaggle (GPU T4) terhadap <code>dataset_preprocessed/</code> di R2 lewat DVC.</p>
+    <div class="meta-row">
+      <div class="meta-item"><span class="k">Status run</span>
+        <span class="pill"><svg viewBox="0 0 20 20" fill="none"><path d="M5 10.5L8.5 14L15 6.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Selesai — 0 error, 90 trial + 3 retrain final</span></div>
+      <div class="meta-item"><span class="k">Sumber</span>
+        <span class="v mono"><a href="https://www.kaggle.com/code/ardiyanto24/cbqd-hpo-optuna" target="_blank" rel="noopener">cbqd-hpo-optuna · full run</a></span></div>
+      <div class="meta-item"><span class="k">Sampler / Pruner</span><span class="v mono">TPESampler(seed=42) / MedianPruner(5,5)</span></div>
+      <div class="meta-item"><span class="k">GPU</span><span class="v mono">Tesla T4 (dipin via machine_shape)</span></div>
+    </div>
+  </div>
+
+  <nav class="toc">
+    <a href="#s1">1 Setup</a><a href="#s2">2 Studi Optuna</a><a href="#s3">3 Retrain Final</a>
+    <a href="#s4">4 Best Hyperparameters</a><a href="#s5">5 Ringkasan</a><a href="#s6">6 Update Pasca-Laporan</a>
+  </nav>
+
+  <div class="tiles">
+    <div class="tile good"><div class="num tabular">+3,01pp</div><div class="lbl">Kenaikan macro-F1 <code>08_multitask</code> — pembalikan peringkat dari 4-Fold CV</div></div>
+    <div class="tile"><div class="num tabular">30 / model</div><div class="lbl">Trial Optuna, TPE sampler + Median Pruner</div></div>
+    <div class="tile flag"><div class="num tabular">23 / 30</div><div class="lbl">Trial <code>05_convnext_tiny</code> dipangkas — jauh lebih tinggi dari 2 model lain (12/30)</div></div>
+    <div class="tile critical"><div class="num tabular">Belum stabil</div><div class="lbl">Lihat Section 6 — gain <code>08_multitask</code> tidak reproduksi di verifikasi ulang</div></div>
+  </div>
+
+  <!-- ============ SECTION 1 ============ -->
+  <section id="s1">
+    <div class="sec-head"><span class="sec-num">1</span><h2 class="sec-title">Setup — Search Space, Protokol &amp; Anggaran Trial</h2></div>
+
+    <div class="sec-block"><div class="sec-label">Tujuan</div>
+      <p><code>CBQD - 4Fold CV.ipynb</code> menemukan peringkat <code>09_noise_robust</code> &gt; <code>05_convnext_tiny</code> &gt; <code>08_multitask</code>, dengan <code>08_multitask</code> secara eksplisit ditandai <b style="color:var(--ink)">tidak stabil</b> antar-fold. HPO menguji apakah tuning hyperparameter mengubah — atau menstabilkan — peringkat itu, alih-alih menerima hyperparameter default begitu saja sebagai representasi kemampuan sebenarnya tiap arsitektur.</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Cara Kerja</div>
+      <ul class="steps">
+        <li><span class="si">1</span><span><b>Split TETAP, bukan rotasi 4-fold:</b> fit (fold 1–3, 697 gambar) / val (fold 0, 232 gambar) / test (fold 4, 231 gambar) — HPO butuh satu val yang konsisten di seluruh trial supaya skor antar-trial bisa dibandingkan adil; rotasi 4-fold baru relevan untuk validasi stabilitas, bukan pencarian hyperparameter.</span></li>
+        <li><span class="si">2</span><span><b>6 hyperparameter bersama</b> untuk ketiga model: <code>lr_phase1</code> (1e-4–3e-3, log), <code>lr_phase2</code> (1e-5–1e-3, log), <code>weight_decay</code> (1e-4–0,1, log), <code>batch_size</code> {16,32,64}, <code>scheduler_factor</code> (0,3–0,7), <code>scheduler_patience</code> {2,3,4,6}.</span></li>
+        <li><span class="si">3</span><span><b>Hyperparameter spesifik model:</b> <code>08_multitask</code> menambah <code>type_loss_weight</code> (0,2–5,0, log); <code>09_noise_robust</code> menambah <code>label_smoothing</code> (0–0,2), <code>mislabel_weight</code> (0,1–0,9), <code>mistake_threshold</code> (0,3–0,7) — <code>mistake_score</code> sendiri dihitung <b style="color:var(--ink)">sekali</b> di awal (RandomForest OOF, sama seperti <code>CBQD - Training.ipynb</code>), tidak bergantung hyperparameter trial, cuma <i>threshold</i>-nya yang dioptimasi.</span></li>
+        <li><span class="si">4</span><span><b>Anggaran epoch dua tingkat, sengaja berbeda:</b> trial pencarian dipangkas ke 30 epoch fase-2 (dari resep asli 45) — cukup untuk sinyal <i>relatif</i> antar-hyperparameter, bukan konvergensi penuh; retrain FINAL (hyperparameter terbaik tiap studi) memakai plafon penuh 45 epoch, supaya angka yang dilaporkan sebagai hasil resmi adil dibanding baseline <code>CBQD - Training.ipynb</code>/<code>CBQD - 4Fold CV.ipynb</code> yang juga 45 epoch.</span></li>
+        <li><span class="si">5</span><span><b>Dry-run wajib sebelum full run:</b> 3 trial/model dengan epoch kecil dan <code>PRUNER_STARTUP_TRIALS=1</code>/<code>PRUNER_WARMUP_STEPS=1</code> — sengaja diperkecil supaya jalur <code>TrialPruned()</code> benar-benar teruji tereksekusi, bukan cuma <code>trial.report()</code> yang tidak pernah memangkas apa pun. Lolos bersih, lanjut ke full run 30 trial/model.</span></li>
+      </ul>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Temuan</div>
+      <div class="flow">
+        <div class="flow-box"><div class="n tabular">697 / 232</div><div class="l">fit (fold 1–3) / val (fold 0) — tetap, semua trial</div></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box"><div class="n tabular">30</div><div class="l">epoch fase-2, budget trial pencarian</div></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-box in"><div class="n tabular">45</div><div class="l">epoch fase-2, retrain final (adil vs baseline)</div></div>
+        <div class="flow-arrow">＋</div>
+        <div class="flow-box mute"><div class="n tabular">231</div><div class="l">held-out test (fold 4) — evaluasi sekali di akhir</div></div>
+      </div>
+      <div class="table-wrap" style="margin-top:20px;">
+        <table>
+          <thead><tr><th>Model</th><th>Arsitektur</th><th>Hyperparameter spesifik</th><th class="num">Trial</th></tr></thead>
+          <tbody>
+            <tr><td>05_convnext_tiny</td><td>ConvNeXt-Tiny</td><td>— (6 bersama saja)</td><td class="num tabular">30</td></tr>
+            <tr><td>08_multitask</td><td>EfficientNet-B0 (1 backbone, 2 head)</td><td><code>type_loss_weight</code></td><td class="num tabular">30</td></tr>
+            <tr><td>09_noise_robust</td><td>EfficientNet-B0</td><td><code>label_smoothing</code>, <code>mislabel_weight</code>, <code>mistake_threshold</code></td><td class="num tabular">30</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Interpretasi</div>
+      <p>Memisahkan anggaran epoch <i>pencarian</i> (30, murah) dari anggaran <i>pelaporan</i> (45, penuh) adalah keputusan metodologis yang disengaja — bukan celah. Konsekuensinya: nilai val-F1 terbaik dari studi Optuna (Section 2) tidak selalu identik dengan val-F1 hasil retrain final (Section 3), karena keduanya dilatih dengan plafon epoch yang berbeda meski hyperparameter-nya sama persis.</p>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 2 ============ -->
+  <section id="s2">
+    <div class="sec-head"><span class="sec-num">2</span><h2 class="sec-title">Studi Optuna — Trial, Pruning &amp; Biaya Pencarian</h2></div>
+
+    <div class="sec-block"><div class="sec-label">Tujuan</div>
+      <p>Median Pruner harus memangkas trial yang jelas kalah lebih awal (setelah 5 trial startup dan 5 epoch warmup) — menghemat waktu GPU supaya anggaran 30 trial/model bisa habis dipakai mengeksplorasi kombinasi yang benar-benar berpotensi, bukan menghabiskan waktu di kombinasi yang sudah jelas buruk sejak epoch-epoch awal.</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Cara Kerja</div>
+      <p><code>optuna.samplers.TPESampler(seed=42)</code> mengusulkan kombinasi hyperparameter baru berdasarkan hasil trial sebelumnya (bukan random search murni); <code>optuna.pruners.MedianPruner(n_startup_trials=5, n_warmup_steps=5)</code> memangkas trial yang val-F1-nya di epoch ke-5+ sudah di bawah median trial-trial sebelumnya pada titik epoch yang sama.</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Temuan</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Model</th><th class="num">Trial selesai</th><th class="num">Trial dipangkas</th><th class="num">Best val-F1 (search, 30 epoch)</th><th class="num">Durasi trial selesai (rata²)</th></tr></thead>
+          <tbody>
+            <tr><td>08_multitask</td><td class="num tabular">18</td><td class="num tabular">12</td><td class="num tabular">0.9915</td><td class="num tabular">154,5 dtk</td></tr>
+            <tr><td>09_noise_robust</td><td class="num tabular">18</td><td class="num tabular">12</td><td class="num tabular">0.9872</td><td class="num tabular">149,6 dtk</td></tr>
+            <tr class="win"><td>05_convnext_tiny</td><td class="num tabular">7</td><td class="num tabular">23</td><td class="num tabular">0.9785</td><td class="num tabular">300,4 dtk</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <div class="ic"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.6"/><path d="M10 6.5V10.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="10" cy="13.3" r="0.9" fill="currentColor"/></svg></div>
+        <div class="body"><b>05_convnext_tiny dipangkas 23 dari 30 trial (77%)</b> — lebih dari 2× lipat tingkat pemangkasan <code>08_multitask</code> dan <code>09_noise_robust</code> (masing-masing 12/30, 40%). Trial ConvNeXt-Tiny yang selesai juga <b>2× lebih lambat</b> (300 dtk vs ~150 dtk) — konsisten dengan temuan <code>CBQD - Training.ipynb</code> bahwa ConvNeXt-Tiny paling berat per-batch di antara kandidat CNN.</div>
+      </div>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Interpretasi</div>
+      <p>Kombinasi "lebih lambat per-epoch" + "anggaran pencarian dipangkas ke 30 epoch" membuat ConvNeXt-Tiny secara struktural dirugikan dalam pencarian ini — konfigurasi yang butuh lebih banyak epoch untuk menunjukkan potensinya lebih mudah dipangkas duluan sebelum sempat konvergen, dibanding backbone EfficientNet-B0 yang lebih ringan. Ini bukan berarti ruang hyperparameter ConvNeXt secara inheren lebih sulit — tapi <i>within budget yang sama</i>, ia mendapat eksplorasi yang secara efektif lebih sedikit (hanya 7 trial benar-benar tuntas).</p>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 3 ============ -->
+  <section id="s3">
+    <div class="sec-head"><span class="sec-num">3</span><h2 class="sec-title">Retrain Final — Tuned vs Baseline Pre-HPO</h2></div>
+
+    <div class="sec-block"><div class="sec-label">Tujuan</div>
+      <p>Angka resmi yang dilaporkan harus datang dari retrain plafon-penuh (45 epoch), bukan dari trial pencarian yang dipangkas — supaya perbandingan "tuned vs baseline pre-HPO" adil, keduanya di bawah anggaran epoch yang identik.</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Cara Kerja</div>
+      <p>Setiap model diretrain sekali lagi dari awal memakai <code>best_params</code> studi Optuna-nya masing-masing (45 epoch fase-2, sama seperti baseline), lalu dievaluasi pada test set (fold 4, 231 gambar) yang sama dan tidak pernah disentuh selama pencarian maupun retrain.</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Temuan</div>
+      <div class="eta-row"><span class="eta-label"><span class="swatch" style="background:var(--good)"></span>08 Multi-task</span><div class="eta-track"><div class="eta-fill win" style="width:100%"></div></div><span class="eta-val tabular">0.9698<span class="eta-badge">Terbaik</span></span></div>
+      <div class="eta-row"><span class="eta-label"><span class="swatch" style="background:var(--accent)"></span>09 Noise-Robust</span><div class="eta-track"><div class="eta-fill" style="width:99.1%"></div></div><span class="eta-val tabular">0.9610</span></div>
+      <div class="eta-row"><span class="eta-label"><span class="swatch" style="background:var(--accent)"></span>05 ConvNeXt-Tiny</span><div class="eta-track"><div class="eta-fill" style="width:97.8%"></div></div><span class="eta-val tabular">0.9483</span></div>
+      <p class="note">Skala batang relatif terhadap 08_multitask (0,9698) — angka test macro-F1 <i>tuned</i>, bukan delta.</p>
+
+      <div class="table-wrap" style="margin-top:20px;">
+        <table>
+          <thead><tr><th>Model</th><th class="num">Val F1 tuned</th><th class="num">Test F1 tuned</th><th class="num">Test F1 baseline</th><th class="num">Δ</th></tr></thead>
+          <tbody>
+            <tr class="win"><td>08_multitask</td><td class="num tabular">0.9870</td><td class="num tabular">0.9698</td><td class="num tabular">0.9397</td><td class="num tabular" style="color:var(--good)">+0.0301</td></tr>
+            <tr><td>09_noise_robust</td><td class="num tabular">0.9828</td><td class="num tabular">0.9610</td><td class="num tabular">0.9610</td><td class="num tabular">−0.00002</td></tr>
+            <tr><td>05_convnext_tiny</td><td class="num tabular">0.9784</td><td class="num tabular">0.9483</td><td class="num tabular">0.9479</td><td class="num tabular">+0.0004</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="table-wrap" style="margin-top:16px;">
+        <table>
+          <thead><tr><th>Model</th>
+            <th class="num"><span class="swatch" style="background:var(--c-defect)"></span>Defect</th>
+            <th class="num"><span class="swatch" style="background:var(--c-longberry)"></span>Longberry</th>
+            <th class="num"><span class="swatch" style="background:var(--c-peaberry)"></span>Peaberry</th>
+            <th class="num"><span class="swatch" style="background:var(--c-premium)"></span>Premium</th></tr></thead>
+          <tbody>
+            <tr class="win"><td>08_multitask</td><td class="num tabular">0.949</td><td class="num tabular">0.982</td><td class="num tabular">0.983</td><td class="num tabular">0.965</td></tr>
+            <tr><td>09_noise_robust</td><td class="num tabular">0.949</td><td class="num tabular">0.982</td><td class="num tabular">0.983</td><td class="num tabular">0.930</td></tr>
+            <tr><td>05_convnext_tiny</td><td class="num tabular">0.932</td><td class="num tabular">0.965</td><td class="num tabular">0.948</td><td class="num tabular">0.947</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Recall per kelas (test set, checkpoint tuned).</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Interpretasi</div>
+      <p>HPO <b style="color:var(--ink)">membalik</b> peringkat yang ditemukan <code>CBQD - 4Fold CV.ipynb</code> (<code>09_noise_robust &gt; 05_convnext_tiny &gt; 08_multitask</code>, dengan 08 ditandai tidak stabil) — setelah tuning, <code>08_multitask</code> justru unggul telak (+3,01pp dari baseline-nya sendiri). Sementara itu <code>09_noise_robust</code> dan <code>05_convnext_tiny</code> nyaris tidak bergerak (delta ~0) — training keduanya sudah dekat optimal bahkan sebelum tuning, jadi HPO tidak menemukan ruang perbaikan berarti untuk keduanya. Recall <code>defect</code> ketiganya kini di atas 0,93 — jauh melampaui baseline hand-crafted 0,73 dari <code>CBQD - Training.ipynb</code> Section 2.</p>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 4 ============ -->
+  <section id="s4">
+    <div class="sec-head"><span class="sec-num">4</span><h2 class="sec-title">Best Hyperparameters per Model</h2></div>
+
+    <div class="sec-block"><div class="sec-label">Tujuan</div>
+      <p>Mendokumentasikan konfigurasi persis yang menghasilkan angka Section 3 — supaya reproducible dan supaya jelas <i>apa</i> yang berubah paling drastis untuk <code>08_multitask</code> dibanding default.</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Temuan</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Parameter</th><th class="num">08_multitask</th><th class="num">09_noise_robust</th><th class="num">05_convnext_tiny</th></tr></thead>
+          <tbody>
+            <tr><td>lr_phase1</td><td class="num tabular">4,42e-4</td><td class="num tabular">2,41e-4</td><td class="num tabular">1,02e-4</td></tr>
+            <tr><td>lr_phase2</td><td class="num tabular">7,02e-4</td><td class="num tabular">4,42e-4</td><td class="num tabular">8,78e-5</td></tr>
+            <tr><td>weight_decay</td><td class="num tabular">5,12e-3</td><td class="num tabular">2,88e-4</td><td class="num tabular">1,01e-4</td></tr>
+            <tr><td>batch_size</td><td class="num tabular">16</td><td class="num tabular">16</td><td class="num tabular">16</td></tr>
+            <tr><td>scheduler_factor</td><td class="num tabular">0,636</td><td class="num tabular">0,437</td><td class="num tabular">0,402</td></tr>
+            <tr><td>scheduler_patience</td><td class="num tabular">6</td><td class="num tabular">2</td><td class="num tabular">3</td></tr>
+            <tr class="win"><td>type_loss_weight</td><td class="num tabular">1,644</td><td class="num tabular">—</td><td class="num tabular">—</td></tr>
+            <tr><td>label_smoothing</td><td class="num tabular">—</td><td class="num tabular">0,125</td><td class="num tabular">—</td></tr>
+            <tr><td>mislabel_weight</td><td class="num tabular">—</td><td class="num tabular">0,751</td><td class="num tabular">—</td></tr>
+            <tr><td>mistake_threshold</td><td class="num tabular">—</td><td class="num tabular">0,426</td><td class="num tabular">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Batch size 16 dipilih ketiganya secara independen — kandidat terkecil dari 3 pilihan {16,32,64} — konsisten dengan dataset fit yang kecil (697 gambar).</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Interpretasi</div>
+      <p><code>type_loss_weight=1,64</code> (naik dari default implisit 1,0) menaikkan bobot loss klasifikasi jenis bean relatif terhadap loss status-rusak pada <code>08_multitask</code> — inilah kandidat penjelasan paling langsung untuk lompatan performanya di Section 3. Perubahan hyperparameter tunggal yang berdampak sebesar ini pada dataset sekecil ini (697 gambar fit) adalah alasan tepat kenapa temuan itu perlu diverifikasi ulang sebelum dipercaya penuh — lihat Section 6.</p>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 5 ============ -->
+  <section id="s5">
+    <div class="sec-head"><span class="sec-num">5</span><h2 class="sec-title">Ringkasan</h2></div>
+
+    <div class="sec-block"><div class="sec-label">Temuan</div>
+      <p>Peringkat akhir (test macro-F1, tuned): <b style="color:var(--ink)">08_multitask (0,9698) &gt; 09_noise_robust (0,9610) &gt; 05_convnext_tiny (0,9483)</b>. Dibanding baseline pre-HPO, hanya <code>08_multitask</code> yang bergerak berarti (+3,01pp); dua lainnya pada dasarnya statis.</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Interpretasi</div>
+      <p>Kalau berhenti di sini, kesimpulan wajarnya adalah: promosikan <code>08_multitask</code> sebagai model final, HPO berhasil menemukan konfigurasi yang jauh lebih baik dari yang diduga 4-fold CV. <b style="color:var(--ink)">Section 6 di bawah membantah kesimpulan itu</b> — dan itulah kenapa laporan ini tidak berhenti di Section 5.</p>
+    </div>
+  </section>
+
+  <!-- ============ SECTION 6 ============ -->
+  <section id="s6">
+    <div class="sec-head"><span class="sec-num">6</span><h2 class="sec-title">Update Pasca-Laporan — Verifikasi Reproduksibilitas</h2></div>
+
+    <div class="sec-block"><div class="sec-label">Tujuan</div>
+      <p>Ditambahkan setelah <code>CBQD - XAI HPO-Tuned.ipynb</code> dijalankan (2026-09-08) untuk memverifikasi ketiga checkpoint tuned di atas tidak melakukan prediksi lewat shortcut. Bagian dari verifikasi itu adalah <i>sanity check</i>: retrain ulang ketiga model dengan hyperparameter <b style="color:var(--ink)">identik</b> ke Section 4, lalu bandingkan test macro-F1-nya ke angka Section 3.</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Temuan</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Model</th><th class="num">Test F1 (laporan ini)</th><th class="num">Test F1 (retrain ulang, hyperparameter identik)</th><th class="num">Δ</th></tr></thead>
+          <tbody>
+            <tr><td>08_multitask</td><td class="num tabular">0.9698</td><td class="num tabular">0.9352</td><td class="num tabular" style="color:var(--critical)">−0.0346</td></tr>
+            <tr><td>05_convnext_tiny</td><td class="num tabular">0.9483</td><td class="num tabular">0.9267</td><td class="num tabular" style="color:var(--critical)">−0.0216</td></tr>
+            <tr><td>09_noise_robust</td><td class="num tabular">0.9610</td><td class="num tabular">0.9739</td><td class="num tabular" style="color:var(--good)">+0.0129</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout critical">
+        <div class="ic"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.6"/><path d="M10 6.5V10.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="10" cy="13.3" r="0.9" fill="currentColor"/></svg></div>
+        <div class="body"><b>Retrain ulang <code>08_multitask</code> dengan hyperparameter yang sama persis menghasilkan 0,9352 — di bawah baseline pre-HPO-nya sendiri (0,9397).</b> Kenaikan +3,01pp di Section 3 tidak reproduksi sama sekali; selisih antar dua retrain (−3,5pp) hampir sebesar klaim kenaikannya sendiri.</div>
+      </div>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Interpretasi</div>
+      <p>Ini <b style="color:var(--ink)">bukan bug</b> — <code>CBQD - HPO Optuna.ipynb</code> menjalankan 30 trial Optuna dulu (membakar random-state jauh berbeda) sebelum retrain final-nya sendiri, sesuatu yang tidak (dan tidak perlu) direplikasi ulang saat verifikasi. Tapi itu justru <b style="color:var(--ink)">temuan intinya</b>: performa <code>08_multitask</code> sangat sensitif terhadap lintasan random training tertentu, bukan perbaikan struktural yang stabil. Sisi baiknya: metrik damage-leak (Hipotesis #2 XAI) identik di checkpoint lama vs baru untuk ketiga model — HPO tidak menambah ketergantungan shortcut baru, gain performa yang dirayakan di Section 3 memang cuma tidak stabil, bukan hasil dari sinyal yang salah.</p>
+      <div class="callout" style="margin-top:16px;">
+        <div class="ic"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.6"/><path d="M10 6.5V10.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="10" cy="13.3" r="0.9" fill="currentColor"/></svg></div>
+        <div class="body"><b>Rekomendasi:</b> jangan finalisasi <code>08_multitask</code> sebagai model produksi berdasarkan Section 3 saja. Validasi ulang dengan multi-seed averaging atau protokol 4-fold CV penuh (memakai hyperparameter tuned) sebelum keputusan akhir — lihat <code>metadata/xai_hpo_tuned_summary.csv</code> dan commit <code>f3c2fd7</code> untuk detail lengkap.</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Dibangkitkan dari eksekusi nyata <a href="https://www.kaggle.com/code/ardiyanto24/cbqd-hpo-optuna" target="_blank" rel="noopener">cbqd-hpo-optuna</a> (full run, 30 trial/model + retrain final, selesai tanpa error) dan <a href="https://www.kaggle.com/code/ardiyanto24/cbqd-xai-hpo-tuned" target="_blank" rel="noopener">cbqd-xai-hpo-tuned</a> (verifikasi Section 6) terhadap <code class="mono">dataset_preprocessed/</code> R2 yang sama. Seluruh angka diambil langsung dari <code>metadata/hpo_final_summary.csv</code>, <code>results/hpo_trials_*.csv</code>, dan <code>metadata/xai_hpo_tuned_summary.csv</code> — bukan estimasi atau simulasi lokal.
+  </footer>
+
+</div>

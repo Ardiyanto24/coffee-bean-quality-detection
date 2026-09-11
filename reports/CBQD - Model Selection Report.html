@@ -1,0 +1,706 @@
+<title>Coffee Bean Model Selection Report</title>
+<style>
+  :root{
+    color-scheme: dark;
+    --bg: #121210;
+    --surface: #1b1b17;
+    --surface-2: #232319;
+    --ink: #f2f1ea;
+    --ink-2: #c3c2b3;
+    --ink-mute: #8f8d7c;
+    --border: rgba(242,241,234,0.13);
+    --border-strong: rgba(242,241,234,0.22);
+    --accent: #a3c479;
+    --accent-ink: #14170d;
+    --accent-soft: #26301a;
+    --mono-bg: #201f18;
+
+    --c-defect: #6fa8ea;
+    --c-longberry: #f0925f;
+    --c-peaberry: #4fce9f;
+    --c-premium: #f0b93f;
+
+    --good: #4fce6c;
+    --warning: #e8b13d;
+    --critical: #e8776a;
+    --warning-bg: #2c2412;
+    --critical-bg: #2d1a16;
+    --good-bg: #16261a;
+  }
+
+  *{box-sizing:border-box;}
+  body{background:var(--bg);}
+  .doc{ max-width: 980px; margin: 0 auto; padding: 0 24px 96px;
+    font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--ink); }
+  h1,h2,h3{ font-family: "IBM Plex Serif", Georgia, serif; text-wrap: balance; font-weight: 600; margin: 0; }
+  .mono, .tabular, code{ font-family: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace; }
+  .tabular{ font-variant-numeric: tabular-nums; }
+  a{ color: var(--accent); }
+  p{ line-height: 1.65; color: var(--ink-2); max-width: 72ch; }
+  code{ background: var(--mono-bg); padding: 1px 5px; border-radius: 4px; font-size: 0.92em; }
+
+  .masthead{ padding: 56px 0 28px; border-bottom: 1px solid var(--border); }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size: 12.5px; letter-spacing: 0.09em; text-transform: uppercase;
+    color: var(--accent); display:flex; align-items:center; gap:8px; }
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);}
+  h1.title{ font-size: clamp(28px, 4.2vw, 40px); line-height: 1.16; margin-top: 10px; max-width: 26ch; }
+  .subtitle{ margin-top: 10px; font-size: 15.5px; }
+  .meta-row{ display:flex; flex-wrap:wrap; gap: 10px 28px; margin-top: 22px; }
+  .meta-item{ display:flex; flex-direction:column; gap:2px; }
+  .meta-item .k{ font-size:11px; text-transform:uppercase; letter-spacing:.07em; color:var(--ink-mute); }
+  .meta-item .v{ font-size:13.5px; color:var(--ink); }
+  .pill{ display:inline-flex; align-items:center; gap:6px; padding: 3px 10px 3px 8px; border-radius: 999px;
+    background: var(--good-bg); color: var(--good); font-size: 12.5px; font-weight: 600;
+    border: 1px solid currentColor; width: fit-content; }
+  .pill svg{ width:11px; height:11px; }
+
+  nav.toc{ background: var(--bg); padding: 14px 0; border-bottom: 1px solid var(--border);
+    display:flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; position: sticky; top: 0; z-index: 5; }
+  nav.toc a{ font-size: 12px; text-decoration: none; color: var(--ink-2); padding: 6px 10px;
+    border-radius: 7px; border: 1px solid transparent; white-space: nowrap; }
+  nav.toc a:hover{ border-color: var(--border-strong); color: var(--ink); }
+
+  .tiles{ display:grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border);
+    border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin: 28px 0 8px; }
+  .tile{ background: var(--surface); padding: 18px 18px 16px; }
+  .tile .num{ font-family:"IBM Plex Serif", serif; font-weight:600; font-size: 22px; line-height:1.2; }
+  .tile .lbl{ margin-top:8px; font-size:12px; color:var(--ink-mute); line-height:1.4; }
+  .tile.flag .num{ color: var(--warning); }
+  .tile.good .num{ color: var(--good); }
+  .tile.critical .num{ color: var(--critical); }
+
+  section{ padding: 48px 0; border-bottom: 1px solid var(--border); scroll-margin-top: 52px; }
+  section:last-of-type{ border-bottom: none; }
+  .sec-head{ display:flex; align-items:baseline; gap:14px; margin-bottom: 8px; }
+  .sec-num{ font-family:"IBM Plex Mono", monospace; color: var(--ink-mute); font-size:13px; }
+  h2.sec-title{ font-size: 21px; }
+  .sec-dek{ font-size: 13.5px; color: var(--ink-mute); font-style: italic; margin: 0 0 22px; }
+
+  .sec-block{ margin-top: 26px; }
+  .sec-block:first-of-type{ margin-top: 0; }
+  .sec-label{ font-family:"IBM Plex Mono",monospace; font-size:11px; text-transform:uppercase; letter-spacing:.08em;
+    color: var(--accent); display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+  .sec-label::after{ content:""; flex:1; height:1px; background: var(--border); }
+  .sec-block p{ font-size: 14px; }
+  .sec-block p + p{ margin-top: 10px; }
+
+  .steps{ list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:10px; }
+  .steps li{ display:flex; gap:12px; font-size:13.5px; color:var(--ink-2); line-height:1.55; }
+  .steps .si{ flex:none; width:20px; height:20px; border-radius:50%; background:var(--accent-soft); color:var(--accent);
+    display:flex; align-items:center; justify-content:center; font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:700; margin-top:1px; }
+  .steps b{ color: var(--ink); }
+
+  table{ border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  .table-wrap{ overflow-x:auto; margin-top:16px; border:1px solid var(--border); border-radius:10px; }
+  th, td{ text-align:left; padding: 9px 13px; border-bottom:1px solid var(--border); white-space:nowrap; }
+  thead th{ font-size: 11px; text-transform:uppercase; letter-spacing:.05em; color: var(--ink-mute);
+    background:var(--surface-2); font-weight:600; }
+  tbody tr:last-child td{ border-bottom:none; }
+  tbody tr:hover{ background: var(--surface-2); }
+  td.num, th.num{ text-align:right; font-variant-numeric: tabular-nums; }
+  .swatch{ display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:7px; }
+  tr.win td{ background: var(--good-bg); }
+  tr.win td:first-child{ box-shadow: inset 3px 0 0 var(--good); }
+  tr.lose td{ background: var(--critical-bg); }
+  tr.lose td:first-child{ box-shadow: inset 3px 0 0 var(--critical); }
+
+  .callout{ display:flex; gap:12px; border:1px solid var(--border-strong); border-left: 3px solid var(--warning);
+    background: var(--warning-bg); border-radius: 10px; padding: 14px 16px; margin-top: 16px; }
+  .callout.critical{ border-left-color: var(--critical); background: var(--critical-bg); }
+  .callout.good{ border-left-color: var(--good); background: var(--good-bg); }
+  .callout .ic{ flex:none; margin-top:1px; }
+  .callout .ic svg{ width:17px; height:17px; }
+  .callout.warning .ic{ color: var(--warning); }
+  .callout.critical .ic{ color: var(--critical); }
+  .callout.good .ic{ color: var(--good); }
+  .callout .body b{ color: var(--ink); }
+  .callout .body{ font-size: 13.5px; color: var(--ink-2); line-height:1.55; }
+
+  .note{ font-size:12.5px; color:var(--ink-mute); margin-top:10px; }
+
+  .eta-row{ display:flex; align-items:center; gap:10px; font-size:13px; padding:6px 0; }
+  .eta-track{ flex:1; height:16px; background:var(--surface-2); border-radius:4px; overflow:hidden; }
+  .eta-fill{ height:100%; background:var(--accent); border-radius:4px; }
+  .eta-fill.win{ background: var(--good); }
+  .eta-fill.lose{ background: var(--critical); }
+  .eta-label{ width:172px; flex:none; color:var(--ink-2); display:flex; align-items:center; gap:6px; }
+  .eta-val{ width:64px; flex:none; text-align:right; color: var(--ink); font-variant-numeric:tabular-nums; font-size:13px; }
+  .eta-badge{ font-family:"IBM Plex Mono",monospace; font-size:9.5px; text-transform:uppercase; letter-spacing:.04em;
+    color:var(--good); background:var(--good-bg); border:1px solid currentColor; border-radius:5px; padding:1px 5px; margin-left:6px; }
+
+  .quest{ display:flex; gap:12px; background: var(--accent-soft); border-radius: 10px; padding: 14px 16px; margin-bottom: 20px; }
+  .quest .ic{ flex:none; color: var(--accent); margin-top: 1px; }
+  .quest .ic svg{ width:18px; height:18px; }
+  .quest .body{ font-size: 14px; color: var(--ink); line-height: 1.55; }
+  .quest .body b{ font-weight: 600; }
+
+  .journey{ display:flex; flex-direction:column; gap:0; margin: 28px 0 8px; }
+  .journey-node{ display:flex; gap:16px; position:relative; padding-bottom: 22px; }
+  .journey-node:last-child{ padding-bottom: 0; }
+  .journey-node::before{ content:""; position:absolute; left:15px; top:34px; bottom:0; width:2px; background:var(--border-strong); }
+  .journey-node:last-child::before{ display:none; }
+  .journey-dot{ flex:none; width:32px; height:32px; border-radius:50%; background:var(--surface); border:2px solid var(--accent);
+    color:var(--accent); display:flex; align-items:center; justify-content:center; font-family:"IBM Plex Mono",monospace;
+    font-size:12.5px; font-weight:700; z-index:1; }
+  .journey-dot.win{ background:var(--good); border-color:var(--good); color:var(--accent-ink); }
+  .journey-dot.flag{ border-color: var(--warning); color: var(--warning); }
+  .journey-body{ flex:1; padding-top:3px; }
+  .journey-title{ font-size:14px; font-weight:600; color:var(--ink); }
+  .journey-desc{ font-size:12.5px; color:var(--ink-mute); margin-top:3px; line-height:1.5; }
+  .journey-tag{ display:inline-block; font-family:"IBM Plex Mono",monospace; font-size:10.5px; padding:1px 7px;
+    border-radius:5px; margin-top:6px; border:1px solid currentColor; }
+  .journey-tag.win{ color:var(--good); background:var(--good-bg); }
+  .journey-tag.flag{ color:var(--warning); background:var(--warning-bg); }
+
+  .fam-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(170px,1fr)); gap:10px; margin-top:16px; }
+  .fam-card{ border:1px solid var(--border-strong); border-radius:10px; padding:12px 14px; background:var(--surface); }
+  .fam-card .l{ font-family:"IBM Plex Mono",monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--accent); }
+  .fam-card .n{ font-size:13px; color:var(--ink); margin-top:4px; font-weight:600; }
+  .fam-card .d{ font-size:11.5px; color:var(--ink-mute); margin-top:4px; line-height:1.4; }
+
+  .split-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:28px; margin-top:4px; }
+
+  .glossary dt{ font-family:"IBM Plex Mono",monospace; font-size:13px; color:var(--accent); margin-top:14px; }
+  .glossary dt:first-child{ margin-top:0; }
+  .glossary dd{ margin:4px 0 0; font-size:13px; color:var(--ink-2); line-height:1.55; }
+
+  footer{ padding: 36px 0 0; font-size:12px; color:var(--ink-mute); }
+  footer a{ color: var(--ink-mute); }
+
+  @media (max-width: 700px){
+    .tiles{ grid-template-columns: repeat(2,1fr); }
+    .split-grid{ grid-template-columns: 1fr; }
+    .eta-label{ width:118px; }
+    th,td{ white-space: normal; }
+  }
+</style>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<div class="doc">
+
+  <div class="masthead">
+    <div class="eyebrow"><span class="dot"></span>Laporan Pemilihan Model · Coffee Bean Quality Detection</div>
+    <h1 class="title">Dari EDA ke Satu Ensemble — 9 Fase, Satu Rantai Alasan</h1>
+    <p class="subtitle">Dokumentasi lengkap perjalanan pemilihan model: bukan cuma angka akhir tiap fase, tapi pertanyaan yang mendorongnya, apa yang meragukan dari fase sebelumnya, dan bagaimana keraguan itu dijawab — dari temuan EDA yang memilih 10 kandidat pertama, sampai ensemble 5-checkpoint yang jadi keputusan produksi final.</p>
+    <div class="meta-row">
+      <div class="meta-item"><span class="k">Status</span>
+        <span class="pill"><svg viewBox="0 0 20 20" fill="none"><path d="M5 10.5L8.5 14L15 6.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>9 fase, keputusan final tercapai</span></div>
+      <div class="meta-item"><span class="k">Model pemenang</span><span class="v mono">Ensemble 5-seed <code>09_noise_robust</code></span></div>
+      <div class="meta-item"><span class="k">Test macro-F1 final</span><span class="v mono tabular">0,9611</span></div>
+      <div class="meta-item"><span class="k">Kandidat awal &rarr; akhir</span><span class="v mono tabular">10 &rarr; 3 &rarr; 1</span></div>
+    </div>
+  </div>
+
+  <nav class="toc">
+    <a href="#ringkasan">Ringkasan</a>
+    <a href="#s1">1 Pra-Training</a><a href="#s2">2 Training</a><a href="#s3">3 XAI 10-Model</a>
+    <a href="#s4">4 4-Fold CV</a><a href="#s5">5 HPO</a><a href="#s6">6 Verifikasi XAI</a>
+    <a href="#s7">7 Repeated-Seed</a><a href="#s8">8 XAI Lengkap</a><a href="#s9">9 Ensemble</a>
+    <a href="#peta">Peta Keputusan</a><a href="#glosarium">Glosarium</a>
+  </nav>
+
+  <!-- ============ RINGKASAN EKSEKUTIF ============ -->
+  <section id="ringkasan">
+    <div class="sec-head"><h2 class="sec-title">Ringkasan Eksekutif</h2></div>
+    <p>Proyek ini menguji 10 pendekatan model untuk mengklasifikasikan kualitas biji kopi (<code>defect</code>/<code>longberry</code>/<code>peaberry</code>/<code>premium</code>) ke dalam 9 fase eksperimen berurutan, masing-masing dipicu oleh keraguan spesifik terhadap fase sebelumnya. <b style="color:var(--ink)">Model final: ensemble 5-checkpoint <code>09_noise_robust</code></b> (EfficientNet-B0 + noise-robust training, di-tuning lewat Optuna, dilatih 5x dengan seed berbeda, probabilitasnya dirata-ratakan) — test macro-F1 <b style="color:var(--ink)">0,9611</b>.</p>
+    <p>Titik paling kritis dalam perjalanan ini: HPO Optuna sempat melaporkan model lain (<code>08_multitask</code>) menang telak (+3 poin persentase) — klaim itu <b style="color:var(--critical)">terbukti tidak reproducible</b> saat diverifikasi ulang, dan baru terjelaskan sepenuhnya lewat eksperimen repeated-seed yang dirancang khusus untuk mengukur variance training pada dataset sekecil ini (~700 gambar). Keputusan akhir bertumpu bukan pada satu angka terbaik, melainkan pada enam+ protokol evaluasi independen yang saling menguatkan.</p>
+    <div class="tiles">
+      <div class="tile good"><div class="num tabular">Ensemble 09_noise_robust</div><div class="lbl">Model produksi final — 5 checkpoint, softmax dirata-ratakan</div></div>
+      <div class="tile"><div class="num tabular">9 fase</div><div class="lbl">EDA &rarr; Training &rarr; XAI &rarr; CV &rarr; HPO &rarr; Verifikasi &rarr; Repeated-Seed &rarr; XAI &rarr; Ensemble</div></div>
+      <div class="tile critical"><div class="num tabular">08_multitask +3pp</div><div class="lbl">Klaim kemenangan HPO yang TERBUKTI tidak reproducible — titik balik seluruh investigasi</div></div>
+      <div class="tile good"><div class="num tabular">0,9611</div><div class="lbl">Test macro-F1 ensemble final, +0,71pp dari rata-rata 5 seed individual</div></div>
+    </div>
+  </section>
+
+  <!-- ============ FASE 1 ============ -->
+  <section id="s1">
+    <div class="sec-head"><span class="sec-num">Fase 1</span><h2 class="sec-title">Pra-Training — Kenapa 10 Model Ini yang Dicoba</h2></div>
+    <p class="sec-dek">Sebelum satu baris kode training ditulis: apa yang sudah diketahui dari EDA, dan bagaimana itu membentuk daftar kandidat?</p>
+
+    <div class="quest">
+      <div class="ic"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.6"/><path d="M10 6.2V11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="10" cy="13.6" r="0.9" fill="currentColor"/></svg></div>
+      <div class="body"><b>Pertanyaan fase ini:</b> berdasarkan apa yang sudah diketahui tentang data (bukan tebakan generik "coba semua arsitektur populer"), model seperti apa yang layak dicoba, dan dengan urutan prioritas seperti apa?</div>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Temuan EDA yang Menentukan Arah</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Karakteristik</th><th>Angka</th><th>Implikasi modeling</th></tr></thead>
+          <tbody>
+            <tr><td>Ukuran dataset</td><td class="tabular">1.150-1.211 gambar, 4 kelas</td><td>Kecil — rawan overfitting untuk model besar/dari-nol</td></tr>
+            <tr><td>Komposisi gambar</td><td class="tabular">256&times;256, 1 bean, background polos, objek ~18-23% frame</td><td>Visual sederhana — tidak butuh arsitektur untuk scene kompleks</td></tr>
+            <tr><td>Sinyal warna &amp; tekstur</td><td class="tabular">&eta;&sup2;=0,22-0,27</td><td>Fitur low-level sudah informatif — baseline non-deep-learning (73%) masuk akal</td></tr>
+            <tr><td>Struktur label</td><td class="tabular">3 metode independen sepakat</td><td><code>defect</code> kemungkinan campuran 3 jenis lain yang rusak — struktur laten 2 sumbu</td></tr>
+            <tr><td>Label noise</td><td class="tabular">~4,5% kandidat mislabel</td><td>Training harus toleran noise, bukan asumsi label 100% bersih</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Sumber: <code>CBQD - EDA v2 (Manual).ipynb</code> &amp; <code>CBQD - EDA v3 (Defect Decomposition).ipynb</code>, didokumentasikan di <code>docs/modeling-strategy.md</code> &amp; <code>docs/preprocessing-recommendations.md</code>.</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Keputusan Framing: Flat 4-Class Dulu, Bukan Langsung Hierarchical</div>
+      <p>EDA v3 menemukan struktur laten "jenis bean &times; status rusak" yang mengarah langsung ke desain hierarchical. Tapi keputusan yang diambil: <b style="color:var(--ink)">flat 4-class dulu sebagai baseline wajib</b> — paling sederhana, cepat dapat angka acuan pertama — baru hierarchical/multi-task sebagai perbaikan TERARAH pada titik lemah yang sudah diketahui (recall <code>defect</code> tertahan di baseline hand-crafted, 0,57), bukan tebak-tebakan di awal.</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">10 Kandidat, Diurutkan sebagai Roadmap</div>
+      <ul class="steps">
+        <li><span class="si">1</span><span><b>Gradient Boosting</b> di atas 11 fitur hand-crafted — baseline tercepat, EDA sudah buktikan fitur ini mencapai 73% dengan RandomForest.</span></li>
+        <li><span class="si">2-3</span><span><b>MobileNetV3 &amp; EfficientNet-B0</b> — arsitektur ringan, karena gambar secara komposisi sederhana kemungkinan besar tidak butuh model berat.</span></li>
+        <li><span class="si">4-5</span><span><b>ResNet-18 &amp; ConvNeXt-Tiny</b> — baseline CNN yang stabil dan modern, ukuran kecil supaya tidak overfit di ~1.200 gambar.</span></li>
+        <li><span class="si">6</span><span><b>DeiT-Tiny (ViT kecil)</b> — menangkap pola global, tapi ditandai berisiko (butuh data lebih banyak) sejak awal.</span></li>
+        <li><span class="si">7-8</span><span><b>Hierarchical &amp; Multi-task</b> — implementasi langsung dari struktur laten EDA v3, menyasar recall <code>defect</code> yang lemah.</span></li>
+        <li><span class="si">9</span><span><b>Noise-robust training</b> (label smoothing + sample-weighting) — menangani label noise ~4,5% yang ditemukan EDA, bukan mengasumsikannya tidak ada.</span></li>
+        <li><span class="si">10</span><span><b>Ensemble</b> (Gradient Boosting + CNN terbaik) — late-fusion sinyal hand-crafted dan representasi CNN.</span></li>
+      </ul>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Kenapa Lanjut ke Fase 2</div>
+      <p>Daftar kandidat dan alasannya sudah solid di atas kertas — sekarang perlu dijalankan sungguhan, di kondisi yang identik untuk semua 10 kandidat, supaya perbandingannya adil.</p>
+    </div>
+  </section>
+
+  <!-- ============ FASE 2 ============ -->
+  <section id="s2">
+    <div class="sec-head"><span class="sec-num">Fase 2</span><h2 class="sec-title">Training 10 Model — Baseline Pertama</h2></div>
+    <p class="sec-dek"><code>CBQD - Training.ipynb</code> — seluruh 10 kandidat, satu split, satu kondisi training yang identik. Detail lengkap di <code>reports/CBQD - Training Report.html</code>.</p>
+
+    <div class="quest">
+      <div class="ic"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.6"/><path d="M10 6.2V11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="10" cy="13.6" r="0.9" fill="currentColor"/></svg></div>
+      <div class="body"><b>Pertanyaan fase ini:</b> dari 10 pendekatan yang sudah dirancang di Fase 1, mana yang benar-benar unggul kalau dilatih sungguhan di kondisi yang sama persis?</div>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Metode</div>
+      <p>Split tetap: <code>fit</code> (fold 1-3, 697 gambar) / <code>val</code> (fold 0, 232 gambar) / <code>test</code> (fold 4, 231 gambar, disisihkan sepenuhnya, tidak pernah dipakai tuning). Fine-tuning 2-fase (freeze backbone &rarr; unfreeze penuh), plafon 45 epoch fase-2, evaluasi sekali di akhir per model. Gate wajib: macro-F1 harus mengalahkan baseline Gradient Boosting (0,744) — kalau tidak, dicurigai ada yang salah di pipeline, bukan model kurang canggih.</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Temuan — Peringkat Lengkap 10 Model</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Model</th><th class="num">Val F1</th><th class="num">Test F1</th>
+            <th class="num"><span class="swatch" style="background:var(--c-defect)"></span>Defect</th>
+            <th class="num"><span class="swatch" style="background:var(--c-longberry)"></span>Longberry</th>
+            <th class="num"><span class="swatch" style="background:var(--c-peaberry)"></span>Peaberry</th>
+            <th class="num"><span class="swatch" style="background:var(--c-premium)"></span>Premium</th></tr></thead>
+          <tbody>
+            <tr class="win"><td>09_noise_robust</td><td class="num tabular">0,983</td><td class="num tabular">0,961</td><td class="num tabular">0,949</td><td class="num tabular">1,000</td><td class="num tabular">0,966</td><td class="num tabular">0,930</td></tr>
+            <tr><td>05_convnext_tiny</td><td class="num tabular">0,961</td><td class="num tabular">0,948</td><td class="num tabular">0,915</td><td class="num tabular">0,947</td><td class="num tabular">0,983</td><td class="num tabular">0,947</td></tr>
+            <tr><td>08_multitask</td><td class="num tabular">0,983</td><td class="num tabular">0,940</td><td class="num tabular">0,898</td><td class="num tabular">0,965</td><td class="num tabular">0,966</td><td class="num tabular">0,930</td></tr>
+            <tr><td>06_deit_tiny</td><td class="num tabular">0,961</td><td class="num tabular">0,935</td><td class="num tabular">0,949</td><td class="num tabular">0,965</td><td class="num tabular">0,966</td><td class="num tabular">0,860</td></tr>
+            <tr><td>07_hierarchical</td><td class="num tabular">0,979</td><td class="num tabular">0,927</td><td class="num tabular">0,898</td><td class="num tabular">0,965</td><td class="num tabular">0,948</td><td class="num tabular">0,895</td></tr>
+            <tr><td>04_resnet18</td><td class="num tabular">0,978</td><td class="num tabular">0,926</td><td class="num tabular">0,898</td><td class="num tabular">0,982</td><td class="num tabular">0,948</td><td class="num tabular">0,877</td></tr>
+            <tr><td>02_mobilenet_v3_large</td><td class="num tabular">0,957</td><td class="num tabular">0,917</td><td class="num tabular">0,881</td><td class="num tabular">0,982</td><td class="num tabular">0,966</td><td class="num tabular">0,842</td></tr>
+            <tr><td>03_efficientnet_b0</td><td class="num tabular">0,970</td><td class="num tabular">0,914</td><td class="num tabular">0,881</td><td class="num tabular">0,895</td><td class="num tabular">0,931</td><td class="num tabular">0,947</td></tr>
+            <tr class="lose"><td>10_ensemble</td><td class="num tabular">&mdash;</td><td class="num tabular">0,891</td><td class="num tabular">0,797</td><td class="num tabular">0,982</td><td class="num tabular">0,931</td><td class="num tabular">0,860</td></tr>
+            <tr><td>01_gradient_boosting</td><td class="num tabular">0,708</td><td class="num tabular">0,744</td><td class="num tabular">0,729</td><td class="num tabular">0,825</td><td class="num tabular">0,724</td><td class="num tabular">0,702</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <div class="ic"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.6"/><path d="M10 6.5V10.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="10" cy="13.3" r="0.9" fill="currentColor"/></svg></div>
+        <div class="body"><b>Ensemble (10) justru KALAH dari komponen CNN-nya sendiri</b> (0,891 vs ResNet-18 sendirian 0,926) — gejala ini baru terjelaskan mekanismenya di Fase 3. Kelima arsitektur transfer-learning polos (02-06) berkerumun rapat (0,914-0,948) — pilihan arsitektur ternyata bukan pengungkit utama di dataset sekecil ini; <code>09_noise_robust</code> menang justru lewat CARA MELATIH (noise-robust weighting), bukan lewat arsitektur yang lebih besar.</div>
+      </div>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Kenapa Lanjut ke Fase 3 (Bukan Langsung ke CV)</div>
+      <p>Godaan wajar setelah dapat peringkat: langsung validasi <code>09_noise_robust</code> dengan 4-fold CV untuk memastikan angkanya stabil. Tapi ada pertanyaan yang lebih mendasar yang harus dijawab DULU: <b style="color:var(--ink)">4-fold CV cuma menguji stabilitas skor terhadap pembagian data — bukan apakah model "berpikir" dengan benar</b>. Kalau sebuah model mendapat skor tinggi karena bergantung pada shortcut yang konsisten ada di seluruh dataset (mis. posisi bean dalam frame), CV yang stabil justru memberi rasa percaya diri yang salah — shortcut itu akan "bekerja" konsisten di semua fold juga, karena datanya sama. XAI harus dilakukan dulu, ke SELURUH 10 model (bukan cuma pemenang) — supaya peringkat di atas bisa dipercaya sebagai perbandingan yang adil, dan gejala kegagalan ensemble bisa dijelaskan mekanismenya.</p>
+    </div>
+  </section>
+
+  <!-- ============ FASE 3 ============ -->
+  <section id="s3">
+    <div class="sec-head"><span class="sec-num">Fase 3</span><h2 class="sec-title">XAI pada 10 Model — Memverifikasi Cara Berpikir, Bukan Cuma Skor</h2></div>
+    <p class="sec-dek"><code>CBQD - XAI.ipynb</code> — lima sudut pandang &times; lima hipotesis kecurigaan &times; seluruh 10 model, dikelompokkan jadi 5 keluarga arsitektur. Detail metodologi lengkap di <code>docs/xai-strategy.md</code>.</p>
+
+    <div class="quest">
+      <div class="ic"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.6"/><path d="M10 6.2V11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="10" cy="13.6" r="0.9" fill="currentColor"/></svg></div>
+      <div class="body"><b>Pertanyaan fase ini:</b> apakah salah satu dari 10 model mengandalkan shortcut yang kebetulan ada di seluruh dataset (posisi, warna, ukuran, kebocoran konsep "rusak"), dan kenapa ensemble (Fase 2) gagal secara mekanistik, bukan cuma gejalanya?</div>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">5 Hipotesis Kecurigaan</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Hipotesis</th><th>Sumber kecurigaan</th></tr></thead>
+          <tbody>
+            <tr><td class="tabular">1</td><td>Posisi (<code>off_center</code>) dipakai sebagai shortcut ke <code>premium</code></td><td>EDA v2 &sect;06</td></tr>
+            <tr><td class="tabular">2</td><td>Konsep "rusak" bocor ke prediksi kelas non-defect</td><td>EDA v3</td></tr>
+            <tr><td class="tabular">3</td><td>Model tidak generalisasi ke gambar dunia nyata (<code>real_world/</code>)</td><td>Praktik umum</td></tr>
+            <tr><td class="tabular">4</td><td>Warna (<code>dark_color</code>) dipakai sebagai shortcut ke <code>defect</code></td><td>EDA v2 — effect size terbesar</td></tr>
+            <tr><td class="tabular">5</td><td>Ukuran-di-frame (<code>large_area</code>) dipakai sebagai shortcut ke <code>peaberry</code></td><td>EDA v2 &sect;07/&sect;08</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Prinsip cakupan: kelima hipotesis diuji di SELURUH 10 model tanpa kecuali — kombinasi yang secara arsitektural tidak mungkin diuji dilaporkan eksplisit sebagai N/A, bukan dilewati diam-diam.</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">5 Keluarga Arsitektur, 5 Adapter Metode</div>
+      <div class="fam-grid">
+        <div class="fam-card"><div class="l">Keluarga A</div><div class="n">CNN Polos</div><div class="d">02, 03, 04, 05, 09 — Grad-CAM native + IG + Occlusion</div></div>
+        <div class="fam-card"><div class="l">Keluarga B</div><div class="n">Transformer</div><div class="d">06 DeiT-Tiny — Attention Rollout, bukan Grad-CAM</div></div>
+        <div class="fam-card"><div class="l">Keluarga C</div><div class="n">Tabular/Tree</div><div class="d">01 Gradient Boosting — SHAP atas 11 fitur, bukan piksel</div></div>
+        <div class="fam-card"><div class="l">Keluarga D</div><div class="n">Multi-submodel</div><div class="d">07 Hierarchical, 08 Multi-task — per sub-model/head</div></div>
+        <div class="fam-card"><div class="l">Keluarga E</div><div class="n">Ensemble</div><div class="d">10 — gabungan penjelasan C + A berdampingan</div></div>
+      </div>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Temuan 1 — TCAV: Tidak Ada Shortcut yang Signifikan di Model Manapun</div>
+      <p>Keempat konsep (posisi, bentuk, warna, ukuran) diuji di seluruh model yang relevan — <b style="color:var(--ink)">tidak satu p-value pun signifikan (p&lt;0,05) di manapun</b> (rentang p=0,24-0,84 di semua kombinasi model&times;konsep). Beberapa skor TCAV terlihat ekstrem (mis. <code>06_deit_tiny</code> elongated_shape=0,947, large_area=1,000), tapi signifikansinya tetap tidak lolos ambang — sinyal ini ada, tapi tidak cukup kuat untuk disebut shortcut sistemik.</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Temuan 2 — Damage-Leak: Dua Pengecualian yang Layak Dicatat</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Model</th><th class="num">Damage-leak score</th><th class="num">Korelasi ke misklasifikasi (r, p)</th></tr></thead>
+          <tbody>
+            <tr><td>8 dari 10 model (02,03,04,05,09,07b,08,dst.)</td><td class="num tabular">1,000</td><td class="num tabular">sebagian besar tidak signifikan</td></tr>
+            <tr class="lose"><td>01_gradient_boosting</td><td class="num tabular">0,000</td><td class="num tabular">r=0,254, p=0,0008 (signifikan)</td></tr>
+            <tr><td>06_deit_tiny</td><td class="num tabular">0,000</td><td class="num tabular">r=&minus;0,115, p=0,134 (tidak signifikan)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Skor damage-leak 1,0 di 8 model tampak mengkhawatirkan secara nominal, tapi korelasinya ke misklasifikasi aktual sebagian besar TIDAK signifikan — metrik ini cenderung jenuh di angka maksimum secara umum (kemungkinan keterbatasan desain metrik), bukan bukti kuat shortcut spesifik per model. Justru <code>01_gradient_boosting</code> (skor 0,0 tapi korelasi SIGNIFIKAN) yang paling layak dicurigai — konsisten dengan sifatnya sebagai model paling sederhana/kasar.</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Temuan 3 — Kenapa Ensemble Gagal: Mekanisme Ditemukan</div>
+      <div class="callout critical">
+        <div class="ic"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.6"/><path d="M10 6.5V10.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="10" cy="13.3" r="0.9" fill="currentColor"/></svg></div>
+        <div class="body">Agreement rate GB vs ResNet-18 cuma 0,740 — dan pada <b>23,7% kasus di mana ResNet-18 justru BENAR</b>, Gradient Boosting tidak sepakat dengannya. Rata-rata 50/50 menarik prediksi ke arah yang salah tepat di kasus-kasus ResNet-18 sudah benar. Ini menjelaskan MEKANISME di balik gejala Fase 2 (ensemble 0,891 vs ResNet-18 sendirian 0,926) — bukan cuma observasi ulang.</div>
+      </div>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Temuan 4 — Family D: Head-Agreement Menjelaskan Kenapa Hierarchical/Multi-task Tidak Unggul</div>
+      <p>Korelasi heatmap head-tipe vs head-rusak: <code>07_hierarchical</code> (dua model terpisah) = 0,376 (spesialisasi spasial nyata, sesuai desain), <code>08_multitask</code> (satu backbone) = 0,840 (nyaris identik). Kedua sub-task sendiri sangat akurat (val-F1 0,994 &amp; 0,978), tapi begitu digabung ke 4-label flat, hasilnya tetap kalah dari CNN flat biasa (Fase 2) — errornya menumpuk saat kombinasi, konsisten dengan tingginya head-agreement <code>08_multitask</code> (kedua head belajar representasi yang mirip, bukan benar-benar terspesialisasi).</div>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Temuan 5 — Generalisasi <code>real_world/</code>: Semua Model Turun, Termasuk yang Nanti Jadi Pemenang</div>
+      <p>Confidence turun dari test ke <code>real_world/</code> di SEMUA 10 model (wajar — distribusi gambar berbeda). Yang menarik: <code>09_noise_robust</code> — kandidat yang akhirnya jadi pemenang — justru punya <b style="color:var(--ink)">real-world confidence TERENDAH dari semua 10 model di titik ini</b> (0,754, dibanding rata-rata ~0,85). Ini dicatat sebagai titik lemah yang perlu terus dipantau, bukan diabaikan — dan memang diperiksa ulang secara eksplisit di Fase 8 (membaik jadi 0,776 setelah tuning).</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Kenapa Lanjut ke Fase 4</div>
+      <p>Tidak ditemukan shortcut sistemik yang signifikan di 3 kandidat teratas (09, 05, 08) — cara berpikirnya cukup bisa dipercaya. Sekarang baru sah untuk menguji APAKAH PERINGKAT-nya stabil terhadap pembagian data, karena kekhawatiran "model curang" sudah dijawab duluan.</p>
+    </div>
+  </section>
+
+  <!-- ============ FASE 4 ============ -->
+  <section id="s4">
+    <div class="sec-head"><span class="sec-num">Fase 4</span><h2 class="sec-title">4-Fold CV — Baseline Butuh Diuji Ulang</h2></div>
+    <p class="sec-dek"><code>CBQD - 4Fold CV.ipynb</code> — 3 kandidat teratas, diputar 4&times; sebagai fold test yang berbeda.</p>
+
+    <div class="quest">
+      <div class="ic"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.6"/><path d="M10 6.2V11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="10" cy="13.6" r="0.9" fill="currentColor"/></svg></div>
+      <div class="body"><b>Pertanyaan fase ini:</b> apakah peringkat 09 &gt; 05 &gt; 08 dari Fase 2 stabil kalau data yang jadi test diganti-ganti, atau itu cuma kebetulan satu split?</div>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Metode</div>
+      <p>Cluster-aware <code>StratifiedGroupKFold</code> berbasis <code>cluster_id</code> (bean fisik yang sama tak boleh bocor lintas fold). Hyperparameter TETAP (belum di-tuning) — fase ini murni tentang stabilitas, bukan optimasi.</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Temuan</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Model</th><th class="num">Mean (4 fold)</th><th class="num">Std</th><th class="num">Min</th><th class="num">Max</th></tr></thead>
+          <tbody>
+            <tr class="win"><td>09_noise_robust</td><td class="num tabular">0,9470</td><td class="num tabular">0,0130</td><td class="num tabular">0,9305</td><td class="num tabular">0,9611</td></tr>
+            <tr><td>05_convnext_tiny</td><td class="num tabular">0,9404</td><td class="num tabular">0,0189</td><td class="num tabular">0,9133</td><td class="num tabular">0,9566</td></tr>
+            <tr class="lose"><td>08_multitask</td><td class="num tabular">0,9347</td><td class="num tabular">0,0147</td><td class="num tabular">0,9172</td><td class="num tabular">0,9521</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout warning">
+        <div class="ic"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.6"/><path d="M10 6.5V10.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="10" cy="13.3" r="0.9" fill="currentColor"/></svg></div>
+        <div class="body"><code>08_multitask</code> secara eksplisit ditandai <b>tidak stabil</b> antar-fold (mean terendah, rentang paling rendah). Peringkat Fase 2 bertahan, tapi hyperparameter belum pernah dituning satu pun.</div>
+      </div>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Kenapa Lanjut ke Fase 5</div>
+      <p>Ketiga model diuji dengan hyperparameter TEBAKAN. Sebelum menyimpulkan <code>08_multitask</code> memang lebih lemah, wajar bertanya: apakah ada konfigurasi hyperparameter lain yang belum dicoba, terutama untuk kandidat yang tidak stabil ini?</p>
+    </div>
+  </section>
+
+  <!-- ============ FASE 5 ============ -->
+  <section id="s5">
+    <div class="sec-head"><span class="sec-num">Fase 5</span><h2 class="sec-title">HPO Optuna — Tuning Menemukan "Pemenang" Baru</h2></div>
+    <p class="sec-dek"><code>CBQD - HPO Optuna.ipynb</code>: 30 trial per model (TPE + Median Pruner), retrain final di plafon epoch penuh. Detail lengkap di <code>reports/CBQD - HPO Report.html</code>.</p>
+
+    <div class="quest">
+      <div class="ic"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.6"/><path d="M10 6.2V11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="10" cy="13.6" r="0.9" fill="currentColor"/></svg></div>
+      <div class="body"><b>Pertanyaan fase ini:</b> dengan hyperparameter yang benar-benar dioptimasi, apakah peringkat Fase 4 berubah — bisakah <code>08_multitask</code> yang tidak stabil itu diperbaiki?</div>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Metode</div>
+      <p>Search space 6 hyperparameter bersama (learning rate 2 fase, weight decay, batch size, scheduler) + parameter spesifik model (<code>type_loss_weight</code> untuk 08; <code>label_smoothing</code>/<code>mislabel_weight</code>/<code>mistake_threshold</code> untuk 09). Retrain final pakai <code>best_params</code> di plafon 45 epoch penuh.</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Temuan</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Model</th><th class="num">Test F1 tuned</th><th class="num">Baseline pre-HPO</th><th class="num">&Delta;</th></tr></thead>
+          <tbody>
+            <tr class="win"><td>08_multitask</td><td class="num tabular">0,9698</td><td class="num tabular">0,9397</td><td class="num tabular" style="color:var(--good)">+0,0301</td></tr>
+            <tr><td>09_noise_robust</td><td class="num tabular">0,9610</td><td class="num tabular">0,9610</td><td class="num tabular">~0</td></tr>
+            <tr><td>05_convnext_tiny</td><td class="num tabular">0,9483</td><td class="num tabular">0,9479</td><td class="num tabular">~0</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Peringkat berbalik total: <code>08_multitask</code> (paling lemah &amp; tidak stabil di Fase 4) sekarang unggul telak. <code>09</code> &amp; <code>05</code> nyaris tidak bergerak.</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Kalau Berhenti di Sini...</div>
+      <p>Kesimpulan yang WAJAR — dan yang HAMPIR diambil — adalah: promosikan <code>08_multitask</code>, HPO berhasil menemukan konfigurasi (<code>type_loss_weight=1,64</code>) yang jauh lebih baik dari dugaan Fase 4.</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Kenapa TIDAK Berhenti di Sini</div>
+      <p>Lompatan performa sebesar ini (+3pp), pada dataset sekecil ~700 gambar fit, untuk model yang SEBELUMNYA justru paling tidak stabil — pola klasik yang pantas dicurigai, bukan otomatis dirayakan. Sebelum memfiksasi <code>08_multitask</code>, dua hal wajib diverifikasi: (1) apakah model ini mengeksploitasi sinyal yang salah, dan (2) apakah angka itu bisa direproduksi.</p>
+    </div>
+  </section>
+
+  <!-- ============ FASE 6 ============ -->
+  <section id="s6">
+    <div class="sec-head"><span class="sec-num">Fase 6</span><h2 class="sec-title">Verifikasi XAI &amp; Reproduksibilitas — Retakan Pertama pada Klaim Kemenangan</h2></div>
+    <p class="sec-dek"><code>CBQD - XAI HPO-Tuned.ipynb</code> — strategi bertingkat: baterai XAI lengkap untuk <code>08_multitask</code> (paling dicurigai), spot-check untuk <code>09</code>/<code>05</code>.</p>
+
+    <div class="quest">
+      <div class="ic"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.6"/><path d="M10 6.2V11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="10" cy="13.6" r="0.9" fill="currentColor"/></svg></div>
+      <div class="body"><b>Pertanyaan fase ini:</b> apakah checkpoint tuned mengandalkan shortcut? Dan — sanity check tambahan — apakah retrain dengan hyperparameter IDENTIK mereproduksi angka Fase 5?</div>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Temuan Bagian 1 — Shortcut</div>
+      <p>Damage-leak score IDENTIK di checkpoint lama vs baru untuk ketiga model (delta=0,0000) — HPO tidak menambah ketergantungan shortcut baru. TCAV <code>08_multitask</code> semua tidak signifikan (p=0,37-0,70). <b style="color:var(--ink)">Sejauh ini aman.</b></p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Temuan Bagian 2 — Reproduksibilitas</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Model</th><th class="num">Fase 5 (dilaporkan)</th><th class="num">Retrain ulang (verifikasi)</th><th class="num">&Delta;</th></tr></thead>
+          <tbody>
+            <tr class="lose"><td>08_multitask</td><td class="num tabular">0,9698</td><td class="num tabular">0,9352</td><td class="num tabular" style="color:var(--critical)">&minus;0,0346</td></tr>
+            <tr><td>05_convnext_tiny</td><td class="num tabular">0,9483</td><td class="num tabular">0,9267</td><td class="num tabular" style="color:var(--critical)">&minus;0,0216</td></tr>
+            <tr><td>09_noise_robust</td><td class="num tabular">0,9610</td><td class="num tabular">0,9739</td><td class="num tabular" style="color:var(--good)">+0,0129</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout critical">
+        <div class="ic"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.6"/><path d="M10 6.5V10.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="10" cy="13.3" r="0.9" fill="currentColor"/></svg></div>
+        <div class="body"><b>Retrain ulang <code>08_multitask</code> dengan hyperparameter SAMA PERSIS menghasilkan 0,9352 — di BAWAH baseline pre-HPO-nya sendiri (0,9397).</b> Klaim kemenangan +3pp tidak reproduksi sama sekali.</div>
+      </div>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Kenapa Ini Belum Cukup untuk Menyimpulkan Apa-Apa</div>
+      <p>Dua angka (0,9698 vs 0,9352) MENGGODA untuk disimpulkan "HPO cuma beruntung" — tapi ini <b style="color:var(--ink)">bukan perbandingan yang bersih</b>. <code>CBQD - HPO Optuna.ipynb</code> menjalankan 30 trial dulu (membakar ratusan panggilan random) sebelum retrain final-nya; retrain verifikasi mulai langsung setelah seeding. Posisi RNG stream keduanya berbeda — ini <i>confound</i>, bukan eksperimen "seed A vs seed B" yang terkontrol.</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Kenapa Lanjut ke Fase 7</div>
+      <p>Untuk menjawab "seberapa besar variance training yang wajar", dibutuhkan eksperimen yang BENAR-BENAR terkontrol — bukan dua angka yang kebetulan didapat dari proses yang berbeda.</p>
+    </div>
+  </section>
+
+  <!-- ============ FASE 7 ============ -->
+  <section id="s7">
+    <div class="sec-head"><span class="sec-num">Fase 7</span><h2 class="sec-title">Repeated-Seed Stability — Kenapa Kita Butuh Eksperimen Terkontrol</h2></div>
+    <p class="sec-dek">Titik balik metodologis investigasi ini. <code>CBQD - HPO Seed Stability.ipynb</code>.</p>
+
+    <div class="quest">
+      <div class="ic"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.6"/><path d="M10 6.2V11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="10" cy="13.6" r="0.9" fill="currentColor"/></svg></div>
+      <div class="body"><b>Pertanyaan fase ini:</b> kalau split data &amp; hyperparameter dibuat BENAR-BENAR tetap, dan cuma random seed training yang berubah — seberapa jauh angka test macro-F1 bisa bergeser murni karena stokastisitas training?</div>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Cara Berpikir Peneliti: Kenapa Bukan Cuma "Retrain Sekali Lagi"</div>
+      <ul class="steps">
+        <li><span class="si">1</span><span><b>Masalah eksperimen terkontrol:</b> dua angka Fase 6 berbeda bukan cuma karena seed — RNG-stream position-nya juga berbeda (confound). Untuk mengisolasi PENGARUH seed secara murni, harus ada eksperimen di mana SATU-SATUNYA yang berubah adalah seed, direset eksplisit tepat sebelum tiap retrain.</span></li>
+        <li><span class="si">2</span><span><b>Masalah statistik sampel kecil:</b> std di Fase 4 dihitung dari cuma <b>n=4</b> fold. Estimasi std dari 4 sampel itu sendiri sangat tidak stabil — bisa jadi kesimpulan "08_multitask outlier" cuma artefak dari std yang terlalu kecil karena sampelnya sedikit, bukan fakta yang benar.</span></li>
+        <li><span class="si">3</span><span><b>Solusi:</b> pertahankan SATU split, pertahankan hyperparameter TETAP (hasil tuning Fase 5), ganti HANYA seed (42, 43, 44, 45, 46), retrain 5x independen per model — 15 retrain total. Variance yang tersisa HANYA bisa berasal dari stokastisitas training.</span></li>
+      </ul>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Temuan</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Model</th><th class="num">Mean (5 seed)</th><th class="num">Std</th><th class="num">Min</th><th class="num">Max</th></tr></thead>
+          <tbody>
+            <tr class="win"><td>09_noise_robust</td><td class="num tabular">0,9540</td><td class="num tabular">0,0171</td><td class="num tabular">0,9304</td><td class="num tabular">0,9697</td></tr>
+            <tr><td>08_multitask</td><td class="num tabular">0,9532</td><td class="num tabular">0,0198</td><td class="num tabular">0,9304</td><td class="num tabular">0,9826</td></tr>
+            <tr><td>05_convnext_tiny</td><td class="num tabular">0,9448</td><td class="num tabular">0,0115</td><td class="num tabular">0,9267</td><td class="num tabular">0,9526</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <div class="ic"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.6"/><path d="M10 6.5V10.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="10" cy="13.3" r="0.9" fill="currentColor"/></svg></div>
+        <div class="body"><b><code>09_noise_robust</code> (0,9540) dan <code>08_multitask</code> (0,9532) secara statistik SETARA</b> — beda cuma 0,08pp, jauh di bawah 1 std keduanya. Tapi <code>08_multitask</code> punya std lebih besar (0,0198 vs 0,0171) dan rentang lebih lebar (5,2pp vs 3,9pp).</div>
+      </div>
+      <p class="note">Rasio seed_std terhadap std 4-fold CV Fase 4: 09=1,32&times;, 08=1,35&times; — variance dari seed SAJA sudah sebesar (bahkan lebih besar dari) variance CV penuh.</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Menilai Ulang Fase 5 &amp; 6 dengan Std yang Lebih Baik</div>
+      <p>Dengan std yang jauh lebih presisi ini, angka 0,9698 (Fase 5) ternyata cuma <b style="color:var(--ink)">+0,84&sigma;</b> dari mean — biasa saja. Begitu pula 0,9352 (Fase 6) cuma <b style="color:var(--ink)">&minus;0,91&sigma;</b>. <b style="color:var(--ink)">Keduanya cuma dua sampel acak dari distribusi yang memang lebar</b>.</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Kenapa Lanjut ke Fase 8</div>
+      <p>Keputusan tie-break: <code>09_noise_robust</code> dipilih sebagai kandidat produksi terdepan (mean setara, std lebih kecil, arsitektur lebih sederhana). Tapi <code>09_noise_robust</code> sebelumnya cuma dapat "spot-check" di Fase 6. <b style="color:var(--ink)">Kandidat yang akan dipromosikan justru harus diperiksa paling ketat</b> — giliran <code>09_noise_robust</code> mendapat baterai XAI penuh.</p>
+    </div>
+  </section>
+
+  <!-- ============ FASE 8 ============ -->
+  <section id="s8">
+    <div class="sec-head"><span class="sec-num">Fase 8</span><h2 class="sec-title">XAI Lengkap untuk Kandidat Baru — Standar yang Sama, Kandidat Berbeda</h2></div>
+    <p class="sec-dek"><code>CBQD - XAI 09-Noise-Robust Full.ipynb</code> — baterai identik yang diberikan ke <code>08_multitask</code> di Fase 6, plus embedding lineage.</p>
+
+    <div class="quest">
+      <div class="ic"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.6"/><path d="M10 6.2V11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="10" cy="13.6" r="0.9" fill="currentColor"/></svg></div>
+      <div class="body"><b>Pertanyaan fase ini:</b> sekarang <code>09_noise_robust</code> jadi kandidat produksi terdepan — apakah dia lolos pemeriksaan seketat yang dulu diberikan ke <code>08_multitask</code>?</div>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Temuan</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Pemeriksaan</th><th class="num">Tuned</th><th class="num">Baseline lama</th><th>Verdict</th></tr></thead>
+          <tbody>
+            <tr><td>TCAV (4 konsep)</td><td class="num tabular">&mdash;</td><td class="num tabular">&mdash;</td><td>semua p&gt;0,37, tidak signifikan</td></tr>
+            <tr><td>Damage-leak</td><td class="num tabular">1,000</td><td class="num tabular">1,000</td><td>delta=0,0000</td></tr>
+            <tr><td>Real-world confidence</td><td class="num tabular">0,776</td><td class="num tabular">0,754</td><td class="num tabular" style="color:var(--good)">+0,022</td></tr>
+            <tr><td>Probe reposisi</td><td class="num tabular">0,052</td><td class="num tabular">0,090</td><td class="num tabular" style="color:var(--good)">turun</td></tr>
+            <tr><td>Probe occlusion-tengah</td><td class="num tabular">0,356</td><td class="num tabular">0,553</td><td class="num tabular" style="color:var(--good)">turun signifikan</td></tr>
+            <tr><td>Probe color-jitter</td><td class="num tabular">0,188</td><td class="num tabular">0,209</td><td class="num tabular" style="color:var(--good)">turun, &lt; 08_multitask (0,240)</td></tr>
+            <tr><td>Embedding lineage (NN)</td><td class="num tabular">0,971</td><td class="num tabular">0,933</td><td class="num tabular" style="color:var(--good)">naik</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout good">
+        <div class="ic"><svg viewBox="0 0 20 20" fill="none"><path d="M5 10.5L8.5 14L15 6.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="body">Tidak satu pun sinyal memburuk. Beberapa justru MEMBAIK — causal-probe sensitivity turun di ketiga jenis probe, embedding lineage naik, dan real-world confidence yang tadinya (Fase 3) TERENDAH dari 10 model kini membaik. <code>09_noise_robust</code> lebih robust terhadap color-jitter dibanding <code>08_multitask</code>.</div>
+      </div>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Kenapa Lanjut ke Fase 9</div>
+      <p>Checkpoint yang baru diperiksa ini (test-F1=0,9739) adalah salah satu hasil seed-sweep Fase 7 yang DI ATAS rata-rata (mean 0,9540) — bukan cherry-pick, tapi juga bukan representasi tipikal. Memakainya langsung untuk produksi mengulang risiko yang SAMA PERSIS dengan yang baru dibongkar di Fase 6-7: mempercayai satu angka tanpa tahu itu beruntung atau tidak.</p>
+    </div>
+  </section>
+
+  <!-- ============ FASE 9 ============ -->
+  <section id="s9">
+    <div class="sec-head"><span class="sec-num">Fase 9</span><h2 class="sec-title">Ensemble — Jangan Ulangi Kesalahan yang Sama</h2></div>
+    <p class="sec-dek"><code>CBQD - 09 Noise-Robust Ensemble.ipynb</code> — keputusan final.</p>
+
+    <div class="quest">
+      <div class="ic"><svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.5" stroke="currentColor" stroke-width="1.6"/><path d="M10 6.2V11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="10" cy="13.6" r="0.9" fill="currentColor"/></svg></div>
+      <div class="body"><b>Pertanyaan fase ini:</b> arsitektur &amp; hyperparameter sudah difiksasi — checkpoint SPESIFIK mana yang layak dipakai produksi?</div>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Kenapa Bukan "Retrain Sekali Lagi dengan Seed Baru"</div>
+      <p>Retrain seed baru cuma menghasilkan SATU sampel lagi dari distribusi yang SAMA (std=0,0171 tidak hilang). <b style="color:var(--ink)">Ensemble — merata-ratakan probabilitas softmax dari beberapa model independen — justru MENGURANGI variance itu sendiri</b> ("deep ensembles", teknik standar; Lakshminarayanan dkk. 2017), bukan cuma menghindari kesan cherry-pick.</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Temuan</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Varian</th><th class="num">Test macro-F1</th></tr></thead>
+          <tbody>
+            <tr><td>seed 42 (individual)</td><td class="num tabular">0,9304</td></tr>
+            <tr><td>seed 43 (individual)</td><td class="num tabular">0,9568</td></tr>
+            <tr><td>seed 44 (individual)</td><td class="num tabular">0,9435</td></tr>
+            <tr><td>seed 45 (individual)</td><td class="num tabular">0,9697</td></tr>
+            <tr><td>seed 46 (individual)</td><td class="num tabular">0,9697</td></tr>
+            <tr class="win"><td><b>ENSEMBLE (5-seed mean-proba)</b></td><td class="num tabular"><b>0,9611</b></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Angka individual PERSIS mereproduksi Fase 7 — konfirmasi retrain ini sah. Ensemble mengalahkan mean individual (+0,0071) tanpa mengejar best-individual (0,9697 — keberuntungan satu seed, bukan target realistis).</p>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Keputusan Final</div>
+      <div class="callout good">
+        <div class="ic"><svg viewBox="0 0 20 20" fill="none"><path d="M5 10.5L8.5 14L15 6.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="body"><b>Model produksi: ensemble 5 checkpoint <code>09_noise_robust</code></b> (<code>models/checkpoints/09_noise_robust_ensemble_seed{42,43,44,45,46}.pt</code>), bukan checkpoint tunggal manapun. Trade-off yang diterima: 5&times; biaya inferensi &amp; kompleksitas deployment, demi tidak bergantung pada satu tebakan seed yang sudah terbukti bisa bergeser sampai ~4-5pp.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ PETA KEPUTUSAN ============ -->
+  <section id="peta">
+    <div class="sec-head"><h2 class="sec-title">Peta Keputusan Lengkap</h2></div>
+    <p class="sec-dek">Satu pandangan ringkas: apa yang meragukan di tiap fase, dan bagaimana fase berikutnya menjawabnya.</p>
+
+    <div class="journey">
+      <div class="journey-node"><div class="journey-dot">1</div><div class="journey-body">
+        <div class="journey-title">Pra-Training &rarr; 10 kandidat dipilih berdasarkan EDA</div>
+        <div class="journey-desc">Bukan tebakan generik — tiap kandidat menjawab temuan spesifik (warna/tekstur kuat, struktur laten jenis&times;rusak, label noise).</div>
+      </div></div>
+      <div class="journey-node"><div class="journey-dot">2</div><div class="journey-body">
+        <div class="journey-title">Training 10 Model &rarr; 09_noise_robust menang (0,961)</div>
+        <div class="journey-desc">Satu split, satu sampel — belum tentu representatif. Ensemble gagal, gejalanya dicatat.</div>
+      </div></div>
+      <div class="journey-node"><div class="journey-dot win">3</div><div class="journey-body">
+        <div class="journey-title">XAI 10 Model &rarr; tidak ada shortcut signifikan, mekanisme kegagalan ensemble terjawab</div>
+        <div class="journey-desc">Cara berpikir model diverifikasi dulu sebelum peringkat dipercaya untuk divalidasi lebih lanjut.</div>
+      </div></div>
+      <div class="journey-node"><div class="journey-dot">4</div><div class="journey-body">
+        <div class="journey-title">4-Fold CV &rarr; peringkat bertahan, tapi 08_multitask tidak stabil</div>
+        <div class="journey-desc">Hyperparameter belum dituning — apakah 08 cuma butuh konfigurasi lebih baik?</div>
+      </div></div>
+      <div class="journey-node"><div class="journey-dot flag">5</div><div class="journey-body">
+        <div class="journey-title">HPO Optuna &rarr; 08_multitask "menang" +3pp</div>
+        <div class="journey-tag flag">Klaim mencurigakan</div>
+        <div class="journey-desc">Lompatan besar pada model yang sebelumnya paling tidak stabil — pantas dicurigai.</div>
+      </div></div>
+      <div class="journey-node"><div class="journey-dot flag">6</div><div class="journey-body">
+        <div class="journey-title">Verifikasi XAI &amp; Reproduksibilitas &rarr; angka +3pp TIDAK reproduksi</div>
+        <div class="journey-tag flag">Retak pertama</div>
+        <div class="journey-desc">Tapi perbandingannya confounded (RNG-stream beda) — belum bisa disimpulkan.</div>
+      </div></div>
+      <div class="journey-node"><div class="journey-dot win">7</div><div class="journey-body">
+        <div class="journey-title">Repeated-Seed Stability &rarr; 09 &amp; 08 statistik SETARA</div>
+        <div class="journey-tag win">Titik balik</div>
+        <div class="journey-desc">Eksperimen terkontrol membuktikan kedua angka sebelumnya sama-sama normal. 09_noise_robust menang tie-break.</div>
+      </div></div>
+      <div class="journey-node"><div class="journey-dot win">8</div><div class="journey-body">
+        <div class="journey-title">XAI Lengkap 09_noise_robust &rarr; bersih di semua sisi, malah lebih robust</div>
+        <div class="journey-desc">Kandidat baru diperiksa dengan standar yang sama ketatnya dengan kandidat lama.</div>
+      </div></div>
+      <div class="journey-node"><div class="journey-dot win">9</div><div class="journey-body">
+        <div class="journey-title">Ensemble 5-Seed &rarr; 0,9611, model produksi final</div>
+        <div class="journey-tag win">Keputusan final</div>
+        <div class="journey-desc">Tidak bergantung pada satu checkpoint yang kebetulan beruntung.</div>
+      </div></div>
+    </div>
+
+    <div class="sec-block" style="margin-top:8px;"><div class="sec-label">Skorkad Perbandingan 3 Finalis</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Kriteria</th><th>09_noise_robust (ensemble)</th><th>08_multitask</th><th>05_convnext_tiny</th></tr></thead>
+          <tbody>
+            <tr><td>Mean performa (5-seed)</td><td class="num tabular">0,9540</td><td class="num tabular">0,9532</td><td class="num tabular">0,9448</td></tr>
+            <tr><td>Std (stabilitas)</td><td class="num tabular" style="color:var(--good)">0,0171 (terendah kedua)</td><td class="num tabular" style="color:var(--critical)">0,0198 (tertinggi)</td><td class="num tabular" style="color:var(--good)">0,0115 (terendah)</td></tr>
+            <tr><td>Kompleksitas arsitektur</td><td style="color:var(--good)">Single-task, 1 head</td><td style="color:var(--critical)">Multi-task, 2 head</td><td style="color:var(--good)">Single-task, 1 head</td></tr>
+            <tr><td>XAI lengkap dijalankan?</td><td style="color:var(--good)">Ya (Fase 8)</td><td style="color:var(--good)">Ya (Fase 6)</td><td style="color:var(--warning)">Spot-check saja</td></tr>
+            <tr><td>Klaim performa reproducible?</td><td style="color:var(--good)">Ya</td><td style="color:var(--critical)">Tidak (Fase 6)</td><td style="color:var(--good)">Ya (relatif stabil)</td></tr>
+            <tr class="win"><td><b>Keputusan akhir</b></td><td><b>TERPILIH — ensemble produksi</b></td><td>Ditolak</td><td>Ditolak (mean terendah)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="sec-block"><div class="sec-label">Pelajaran Metodologis Utama</div>
+      <p>Investigasi ini berulang kali menemukan pola yang sama: <b style="color:var(--ink)">angka tunggal yang terlihat bagus (atau buruk) pada dataset sekecil ini (~700 gambar fit) hampir selalu perlu diverifikasi dengan pengulangan, bukan dipercaya langsung</b> — baik itu hasil 4-fold CV, hasil HPO, maupun satu checkpoint XAI. Setiap kali sebuah angka "terlalu bagus untuk dipercaya begitu saja" muncul, jawabannya bukan menerima atau menolaknya secara langsung, tapi merancang eksperimen yang bisa mengukur seberapa jauh angka itu bisa bergeser secara wajar. Prinsip kedua yang sama pentingnya: <b style="color:var(--ink)">kandidat yang akan dipromosikan harus diperiksa paling ketat, bukan paling longgar</b> — <code>09_noise_robust</code> mendapat baterai XAI penuh justru SETELAH menjadi favorit, bukan sebelumnya.</p>
+    </div>
+  </section>
+
+  <!-- ============ GLOSARIUM ============ -->
+  <section id="glosarium">
+    <div class="sec-head"><h2 class="sec-title">Glosarium</h2></div>
+    <p class="sec-dek">Istilah teknis yang dipakai berulang di laporan ini.</p>
+    <dl class="glossary">
+      <dt>macro-F1</dt><dd>Rata-rata F1-score dari keempat kelas dengan bobot yang sama — dipakai alih-alih akurasi karena kelemahan model tersebar tidak rata antar kelas (mis. <code>defect</code> jauh lebih sulit dari kelas lain).</dd>
+      <dt>Cluster-aware split / <code>StratifiedGroupKFold</code></dt><dd>Pembagian data yang memastikan bean fisik yang sama (difoto berkali-kali) tidak bocor ke train dan test sekaligus — mencegah skor validasi yang optimis palsu.</dd>
+      <dt>Grad-CAM / TCAV</dt><dd>Grad-CAM: heatmap area gambar yang paling memengaruhi prediksi. TCAV: mengukur seberapa besar konsep abstrak (mis. "posisi di tengah") berkontribusi ke keputusan model, dengan uji signifikansi statistik.</dd>
+      <dt>Damage-leak</dt><dd>Uji apakah arah representasi "rusak" di dalam model ikut memengaruhi prediksi gambar non-defect — indikasi kebocoran konsep lintas kelas.</dd>
+      <dt>Seed / stokastisitas training</dt><dd>Angka acak yang mengontrol inisialisasi bobot, urutan augmentasi, dan urutan batch selama training — dua training run dengan data &amp; hyperparameter identik bisa menghasilkan model berbeda kalau seed-nya berbeda.</dd>
+      <dt>Repeated-seed experiment</dt><dd>Melatih model yang sama berkali-kali dengan seed berbeda (split &amp; hyperparameter tetap) untuk mengukur seberapa besar variance hasil yang murni berasal dari stokastisitas training.</dd>
+      <dt>Ensemble (deep ensemble)</dt><dd>Menggabungkan prediksi beberapa model independen (di sini: rata-rata probabilitas softmax dari 5 checkpoint) untuk mengurangi variance prediksi akhir dibanding mengandalkan satu model saja.</dd>
+      <dt>&sigma; (standar deviasi) sebagai satuan "kewajaran"</dt><dd>Menyatakan seberapa jauh satu angka dari rata-rata, dalam satuan std. Angka di bawah ~2&sigma; dianggap masih wajar/tidak istimewa; di atas itu baru layak disebut outlier.</dd>
+    </dl>
+  </section>
+
+  <footer>
+    Disusun dari eksekusi nyata 9 notebook Kaggle (<code class="mono">cbqd-training</code>, <code class="mono">cbqd-xai</code>, <code class="mono">cbqd-4fold-cv</code>, <code class="mono">cbqd-hpo-optuna</code>, <code class="mono">cbqd-xai-hpo-tuned</code>, <code class="mono">cbqd-hpo-seed-stability</code>, <code class="mono">cbqd-xai-09-noise-robust-full</code>, <code class="mono">cbqd-09-noise-robust-ensemble</code>) dan file hasil di <code class="mono">metadata/</code> — bukan estimasi atau simulasi lokal. Lihat juga <a href="./CBQD - Training Report.html">Training Report</a>, <a href="./CBQD - XAI Report.html">XAI Report</a>, dan <a href="./CBQD - HPO Report.html">HPO Report</a> untuk detail per-fase yang lebih lengkap, serta <code class="mono">docs/modeling-strategy.md</code>, <code class="mono">docs/xai-strategy.md</code>, dan <code class="mono">docs/preprocessing-recommendations.md</code> untuk dasar metodologis lengkap.
+  </footer>
+
+</div>

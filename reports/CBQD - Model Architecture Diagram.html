@@ -1,0 +1,183 @@
+<title>Coffee Bean Model Architecture</title>
+<style>
+  :root{
+    color-scheme: dark;
+    --bg: #121210;
+    --surface: #1b1b17;
+    --surface-2: #232319;
+    --ink: #f2f1ea;
+    --ink-2: #c3c2b3;
+    --ink-mute: #8f8d7c;
+    --border: rgba(242,241,234,0.13);
+    --border-strong: rgba(242,241,234,0.22);
+    --accent: #a3c479;
+  }
+  *{box-sizing:border-box;}
+  body{background:var(--bg); margin:0;}
+  .doc{ max-width: 760px; margin: 0 auto; padding: 48px 24px 96px;
+    font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--ink); }
+  h1{ font-family: "IBM Plex Serif", Georgia, serif; font-weight: 600; font-size: clamp(22px,3.4vw,30px);
+    line-height: 1.2; margin: 0; }
+  .eyebrow{ font-family:"IBM Plex Mono", monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--accent); display:flex; align-items:center; gap:8px; margin-bottom: 10px; }
+  .eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);}
+  p.lead{ font-size: 14.5px; color: var(--ink-2); line-height: 1.65; max-width: 62ch; margin: 12px 0 0; }
+  .diagram-card{ margin-top: 32px; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 20px; }
+  .legend{ display:flex; flex-wrap:wrap; gap: 14px 22px; margin-top: 20px; font-size: 12.5px; color: var(--ink-2); }
+  .legend span{ display:flex; align-items:center; gap:7px; }
+  .legend i{ width:10px; height:10px; border-radius:3px; display:inline-block; }
+  .note{ font-size: 12.5px; color: var(--ink-mute); margin-top: 22px; line-height: 1.6; max-width: 62ch; }
+  footer{ margin-top: 40px; font-size: 11.5px; color: var(--ink-mute); border-top: 1px solid var(--border); padding-top: 16px; }
+  footer code{ font-family:"IBM Plex Mono",monospace; background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
+
+  /* --- SVG diagram styling (self-contained, no external widget dependency) --- */
+  svg.arch text{ font-family: "IBM Plex Sans", sans-serif; }
+  svg.arch .t{ font-size: 14px; fill: var(--ink); }
+  svg.arch .th{ font-size: 14px; font-weight: 600; fill: var(--ink); }
+  svg.arch .ts{ font-size: 12px; fill: var(--ink-mute); }
+  svg.arch .box rect{ fill: var(--surface-2); stroke: var(--border-strong); }
+  svg.arch .box .th, svg.arch .box .t{ fill: var(--ink); }
+  svg.arch .box .ts{ fill: var(--ink-mute); }
+  svg.arch .arr{ stroke: var(--ink-mute); stroke-width: 0.75; fill: none; }
+  svg.arch .c-teal rect{ fill: #085041; stroke: #5DCAA5; }
+  svg.arch .c-teal .th{ fill: #9FE1CB; }
+  svg.arch .c-teal .ts{ fill: #5DCAA5; }
+  svg.arch .c-blue rect{ fill: #0C447C; stroke: #85B7EB; }
+  svg.arch .c-blue .th{ fill: #B5D4F4; }
+  svg.arch .c-blue .ts{ fill: #85B7EB; }
+  svg.arch .c-amber rect{ fill: #633806; stroke: #EF9F27; }
+  svg.arch .c-amber .th{ fill: #FAC775; }
+  svg.arch .c-amber .ts{ fill: #EF9F27; }
+  svg.arch .c-purple rect{ fill: #3C3489; stroke: #AFA9EC; }
+  svg.arch .c-purple .th{ fill: #CECBF6; }
+  svg.arch .c-purple .ts{ fill: #AFA9EC; }
+  svg.arch .c-green rect{ fill: #27500A; stroke: #97C459; }
+  svg.arch .c-green .th{ fill: #C0DD97; }
+</style>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<div class="doc">
+
+  <div class="eyebrow"><span class="dot"></span>Diagram Arsitektur · Coffee Bean Quality Detection</div>
+  <h1>Ensemble 09_noise_robust — Arsitektur Lengkap</h1>
+  <p class="lead">Satu diagram utuh: dua jalur training noise-robust (skor mislabel + backbone EfficientNet-B0), digabung di loss tertimbang, diulang independen 5&times; dengan seed berbeda (kotak bertumpuk), lalu probabilitas kelima model dirata-ratakan jadi satu keputusan akhir.</p>
+
+  <div class="diagram-card">
+    <svg class="arch" width="100%" viewBox="0 0 680 860" role="img">
+      <title>Arsitektur lengkap ensemble 09_noise_robust</title>
+      <desc>Satu gambar bean mengalir ke dua jalur paralel dalam training noise-robust: jalur kiri menghitung 11 fitur tangan lewat RandomForest out-of-fold untuk skor mislabel dan bobot sampel, jalur kanan masuk ke backbone EfficientNet-B0 pretrained (stem, tujuh stage MBConv, head pooling) lalu classifier baru menghasilkan logits. Keduanya bertemu di loss cross-entropy berlabel-smoothing dikali bobot sampel, dipakai memperbarui bobot model. Seluruh proses ini diulang independen lima kali dengan seed berbeda, lalu lima probabilitas softmax hasil kelima model dirata-ratakan menjadi satu kelas akhir lewat argmax.</desc>
+      <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+
+      <g class="box"><rect x="36" y="26" width="640" height="658" rx="16" stroke-width="0.5"/></g>
+      <g class="box"><rect x="28" y="18" width="640" height="658" rx="16" stroke-width="0.5"/></g>
+      <g class="box"><rect x="20" y="10" width="640" height="658" rx="16" stroke-width="0.5" stroke-dasharray="5 4"/></g>
+      <text class="th" x="40" y="32" dominant-baseline="central">Training satu model (diulang x5, seed berbeda)</text>
+      <text class="ts" x="40" y="50" dominant-baseline="central">Independen: seed 42, 43, 44, 45, 46</text>
+
+      <line x1="340" y1="114" x2="180" y2="140" class="arr" marker-end="url(#arrow)" stroke="#8f8d7c"/>
+      <line x1="340" y1="114" x2="500" y2="140" class="arr" marker-end="url(#arrow)" stroke="#8f8d7c"/>
+      <line x1="180" y1="196" x2="180" y2="212" class="arr" marker-end="url(#arrow)" stroke="#8f8d7c"/>
+      <line x1="180" y1="268" x2="180" y2="284" class="arr" marker-end="url(#arrow)" stroke="#8f8d7c"/>
+      <line x1="180" y1="340" x2="180" y2="356" class="arr" marker-end="url(#arrow)" stroke="#8f8d7c"/>
+      <line x1="500" y1="196" x2="500" y2="212" class="arr" marker-end="url(#arrow)" stroke="#8f8d7c"/>
+      <line x1="500" y1="268" x2="500" y2="284" class="arr" marker-end="url(#arrow)" stroke="#8f8d7c"/>
+      <line x1="500" y1="340" x2="500" y2="356" class="arr" marker-end="url(#arrow)" stroke="#8f8d7c"/>
+      <line x1="500" y1="412" x2="500" y2="428" class="arr" marker-end="url(#arrow)" stroke="#8f8d7c"/>
+      <line x1="180" y1="412" x2="340" y2="510" class="arr" marker-end="url(#arrow)" stroke="#8f8d7c"/>
+      <line x1="500" y1="484" x2="340" y2="510" class="arr" marker-end="url(#arrow)" stroke="#8f8d7c"/>
+      <line x1="340" y1="566" x2="340" y2="592" class="arr" marker-end="url(#arrow)" stroke="#8f8d7c"/>
+      <line x1="340" y1="684" x2="340" y2="710" class="arr" marker-end="url(#arrow)" stroke="#8f8d7c"/>
+      <line x1="340" y1="766" x2="340" y2="792" class="arr" marker-end="url(#arrow)" stroke="#8f8d7c"/>
+
+      <g class="box">
+        <rect x="230" y="70" width="220" height="44" rx="8" stroke-width="0.5"/>
+        <text class="th" x="340" y="92" text-anchor="middle" dominant-baseline="central">Gambar bean 256x256 RGB</text>
+      </g>
+
+      <g class="c-teal">
+        <rect x="70" y="140" width="220" height="56" rx="8" stroke-width="0.5"/>
+        <text class="th" x="180" y="158" text-anchor="middle" dominant-baseline="central">11 fitur tangan</text>
+        <text class="ts" x="180" y="176" text-anchor="middle" dominant-baseline="central">warna, bentuk, tekstur</text>
+      </g>
+      <g class="c-teal">
+        <rect x="70" y="212" width="220" height="56" rx="8" stroke-width="0.5"/>
+        <text class="th" x="180" y="230" text-anchor="middle" dominant-baseline="central">RandomForest OOF</text>
+        <text class="ts" x="180" y="248" text-anchor="middle" dominant-baseline="central">cross-val, cluster-aware</text>
+      </g>
+      <g class="c-teal">
+        <rect x="70" y="284" width="220" height="56" rx="8" stroke-width="0.5"/>
+        <text class="th" x="180" y="302" text-anchor="middle" dominant-baseline="central">Mistake score</text>
+        <text class="ts" x="180" y="320" text-anchor="middle" dominant-baseline="central">max_proba - true_proba</text>
+      </g>
+      <g class="c-teal">
+        <rect x="70" y="356" width="220" height="56" rx="8" stroke-width="0.5"/>
+        <text class="th" x="180" y="374" text-anchor="middle" dominant-baseline="central">Bobot sampel</text>
+        <text class="ts" x="180" y="392" text-anchor="middle" dominant-baseline="central">skor tinggi jadi bobot 0,751</text>
+      </g>
+
+      <g class="c-blue">
+        <rect x="390" y="140" width="220" height="56" rx="8" stroke-width="0.5"/>
+        <text class="th" x="500" y="158" text-anchor="middle" dominant-baseline="central">Stem</text>
+        <text class="ts" x="500" y="176" text-anchor="middle" dominant-baseline="central">Conv 3x3, 32 kanal</text>
+      </g>
+      <g class="c-blue">
+        <rect x="390" y="212" width="220" height="56" rx="8" stroke-width="0.5"/>
+        <text class="th" x="500" y="230" text-anchor="middle" dominant-baseline="central">MBConv x7 stage</text>
+        <text class="ts" x="500" y="248" text-anchor="middle" dominant-baseline="central">16 &#8594; 320 kanal</text>
+      </g>
+      <g class="c-blue">
+        <rect x="390" y="284" width="220" height="56" rx="8" stroke-width="0.5"/>
+        <text class="th" x="500" y="302" text-anchor="middle" dominant-baseline="central">Head</text>
+        <text class="ts" x="500" y="320" text-anchor="middle" dominant-baseline="central">pool + 1280 kanal</text>
+      </g>
+      <g class="c-amber">
+        <rect x="390" y="356" width="220" height="56" rx="8" stroke-width="0.5"/>
+        <text class="th" x="500" y="374" text-anchor="middle" dominant-baseline="central">Classifier baru</text>
+        <text class="ts" x="500" y="392" text-anchor="middle" dominant-baseline="central">linear 1280 &#8594; 4 kelas</text>
+      </g>
+      <g class="c-amber">
+        <rect x="390" y="428" width="220" height="56" rx="8" stroke-width="0.5"/>
+        <text class="th" x="500" y="446" text-anchor="middle" dominant-baseline="central">Logits</text>
+        <text class="ts" x="500" y="464" text-anchor="middle" dominant-baseline="central">4 nilai mentah</text>
+      </g>
+
+      <g class="c-purple">
+        <rect x="200" y="510" width="280" height="56" rx="8" stroke-width="0.5"/>
+        <text class="th" x="340" y="528" text-anchor="middle" dominant-baseline="central">Loss tertimbang</text>
+        <text class="ts" x="340" y="546" text-anchor="middle" dominant-baseline="central">CE label-smoothing x bobot sampel</text>
+      </g>
+      <g class="c-purple">
+        <rect x="210" y="592" width="260" height="56" rx="8" stroke-width="0.5"/>
+        <text class="th" x="340" y="610" text-anchor="middle" dominant-baseline="central">Update bobot model</text>
+        <text class="ts" x="340" y="628" text-anchor="middle" dominant-baseline="central">backpropagation, per batch</text>
+      </g>
+
+      <g class="c-purple">
+        <rect x="210" y="710" width="260" height="56" rx="8" stroke-width="0.5"/>
+        <text class="th" x="340" y="728" text-anchor="middle" dominant-baseline="central">Rata-rata softmax</text>
+        <text class="ts" x="340" y="746" text-anchor="middle" dominant-baseline="central">5 model terlatih &#8594; 1 keputusan</text>
+      </g>
+      <g class="c-green">
+        <rect x="230" y="792" width="220" height="44" rx="8" stroke-width="0.5"/>
+        <text class="th" x="340" y="814" text-anchor="middle" dominant-baseline="central">Kelas akhir (argmax)</text>
+      </g>
+    </svg>
+
+    <div class="legend">
+      <span><i style="background:#5DCAA5"></i>Jalur skor mislabel (data quality)</span>
+      <span><i style="background:#85B7EB"></i>Backbone EfficientNet-B0 (pretrained)</span>
+      <span><i style="background:#EF9F27"></i>Classifier baru (dilatih dari nol)</span>
+      <span><i style="background:#AFA9EC"></i>Loss / agregasi</span>
+      <span><i style="background:#97C459"></i>Keluaran akhir</span>
+    </div>
+  </div>
+
+  <p class="note">Kotak bertumpuk (garis putus-putus) mewakili seluruh proses training satu model, diulang 5&times; independen dengan seed berbeda. Bagian di luar tumpukan (rata-rata softmax &rarr; kelas akhir) terjadi <b style="color:var(--ink)">setelah</b> kelima model selesai dilatih — dijalankan bersama saat inferensi, bukan bagian dari loop training.</p>
+
+  <footer>
+    Model produksi final proyek Coffee Bean Quality Detection. Checkpoint: <code>models/checkpoints/09_noise_robust_ensemble_seed{42,43,44,45,46}.pt</code>. Lihat <code>reports/CBQD - Model Selection Report.html</code> untuk perjalanan lengkap pemilihan model.
+  </footer>
+
+</div>
