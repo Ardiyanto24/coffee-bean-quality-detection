@@ -18,6 +18,8 @@ Every model here was evaluated on the same cluster-aware held-out test split (ma
 protocol, see [`docs/modeling-strategy.md` §3](modeling-strategy.md#3-strategi-evaluasi)).
 The gate: beat the 73% hand-crafted-feature RandomForest baseline.
 
+![Horizontal bar chart of test macro-F1 for all 10 models, sorted ascending. 09_noise_robust leads at 0.961 (highlighted green), 01_gradient_boosting is lowest at 0.744 and marked as the mandatory baseline (highlighted rust, with a dashed reference line).](images/model-comparison.png)
+
 | # | Model | Test macro-F1 | Test accuracy | Recall `defect` | Recall `longberry` | Recall `peaberry` | Recall `premium` | Beats baseline |
 |---|---|---|---|---|---|---|---|---|
 | 09 | noise_robust (single seed, pre-ensemble) | **0.9610** | 0.9610 | 0.9492 | 1.0000 | 0.9655 | 0.9298 | Yes |
@@ -76,6 +78,8 @@ notebook [`CBQD - HPO Seed Stability.ipynb`](../notebook/CBQD%20-%20HPO%20Seed%2
 
 This table lines up **every single-run number reported so far** for the top-3 next to a
 5-seed repeated-rerun mean, to answer: was any of those single numbers a fluke?
+
+![Dot plot comparing single-run macro-F1 scores against the 5-seed mean and standard deviation for the top-3 HPO candidates. 08_multitask's three single-run points are spread nearly 4 percentage points apart, while 09_noise_robust's are tightly clustered near its own mean.](images/seed-stability-evidence.png)
 
 | Model | 4-fold CV (pre-HPO) | HPO report (1 run) | XAI-verify (1 run) | **5-seed mean** | 5-seed std |
 |---|---|---|---|---|---|

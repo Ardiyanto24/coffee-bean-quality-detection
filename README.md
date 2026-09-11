@@ -15,6 +15,8 @@ other candidates -- including a finding that a promising +3pp HPO gain on the ru
 turned out not to reproduce across seeds. See [`docs/results.md`](docs/results.md) for
 the full comparison.
 
+![Sample images from the dataset: three examples each of premium, longberry, peaberry, and defect coffee beans, single bean per image on a plain background.](docs/images/sample-beans.jpg)
+
 ## Final Model & Performance
 
 **`09_noise_robust`** -- a 5-seed ensemble of EfficientNet-B0 classifiers, trained with
@@ -25,6 +27,8 @@ label smoothing and mislabel-aware sample weighting, combined by softmax averagi
 | Test macro-F1 | **0.9611** |
 | Test accuracy | 0.9610 |
 | Recall (`defect` / `longberry` / `peaberry` / `premium`) | 0.932 / 1.000 / 0.966 / 0.947 |
+
+<img src="docs/images/model-comparison.png" alt="Bar chart comparing test macro-F1 across all 10 candidate models, with 09_noise_robust winning at 0.961 and the mandatory baseline at 0.744" width="600">
 
 This is a deliberately short summary -- full architecture diagram, training recipe,
 hyperparameters, per-class results, and known limitations (e.g. a real-world

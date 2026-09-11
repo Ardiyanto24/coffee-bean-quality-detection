@@ -7,6 +7,8 @@ scopes and deliberately kept in separate files.
 
 Interactive version: [`reports/CBQD - ML Pipeline Architecture (9 Phases).html`](../reports/CBQD%20-%20ML%20Pipeline%20Architecture%20(9%20Phases).html).
 
+![The 9-phase pipeline as a snake-flow diagram: Data Source, EDA, Generate Manifest, Preprocess Dataset, Model Training, HPO Tuning, Validation, Explainability, Final Production Model, color-coded by category (data, data prep, experimentation, validation, production artifact).](images/pipeline-9-phase.png)
+
 ## Pipeline Overview
 
 ```

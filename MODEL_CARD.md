@@ -46,6 +46,13 @@ EfficientNet-B0 classifiers whose predictions are averaged at inference time. Ea
 the five follows the same architecture and training recipe, differing only in random
 seed.
 
+![Full architecture of the 09_noise_robust ensemble: input splits into a mislabel-scoring path (11 hand-crafted features to RandomForest OOF to sample weight) and an EfficientNet-B0 classification path (stem, 7 MBConv stages, head, classifier, logits), both meeting at a weighted loss, repeated independently for 5 seeds, then averaged by softmax voting into a final class.](docs/images/model-architecture.png)
+
+*Diagram legend: orange = mislabel-scoring path (data quality), purple = EfficientNet-B0
+backbone path, gray = loss/aggregation steps, green = final output. The dashed card with
+the stacked-shadow effect marks the block that is repeated 5 times independently (once
+per seed) before the outputs are combined.*
+
 ### 3.1 Per-seed model
 
 ```

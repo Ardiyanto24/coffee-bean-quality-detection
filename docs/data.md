@@ -55,6 +55,8 @@ that is expected, not a bug. Use Section 3 instead.
 
 ## 4. Dataset characteristics (from EDA)
 
+![Three sample images each for premium, longberry, peaberry, and defect classes.](images/sample-beans.jpg)
+
 Summarized from [`docs/modeling-strategy.md` §1](modeling-strategy.md#1-karakteristik-masalah-dari-eda-bukan-asumsi)
 and the EDA reports ([v2](../reports/CBQD%20-%20EDA%20v2%20Report.html),
 [v3](../reports/CBQD%20-%20EDA%20v3%20(Defect%20Decomposition)%20Report.html)):
