@@ -211,6 +211,8 @@ stable of the top-3 HPO candidates; XAI found no shortcut-learning red flags on 
   evidence for this model, but XAI evidence is diagnostic, not a formal guarantee of
   correctness.
 
+  ![Grad-CAM, Integrated Gradients, and Occlusion heatmaps for 09_noise_robust across all 4 classes, all three methods consistently highlighting the bean itself rather than the background.](docs/images/xai-gradcam-09-noise-robust.png)
+
 ## 7. How to Use
 
 ```python
